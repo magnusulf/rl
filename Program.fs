@@ -37,12 +37,6 @@ let actionToString (a: Action) : string =
     | Action.Right -> "Right"
     | _ -> ""
 
-let rec getRandomElementWeighted (lst: 'a list) (weigths: float list) (r: float): 'a =
-    if (r - (List.head weigths)) > 0 then
-        getRandomElementWeighted (List.tail lst) (List.tail weigths) (r - List.head weigths)
-    else
-        List.head lst
-
 let maximumX = 2
 let maximumY = 2
 

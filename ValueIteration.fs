@@ -1,5 +1,7 @@
 module ValueIteration
 
+open RLCore
+
 type StateIdx<'s> = 's->int
 type ActionIdx<'a> = 'a->int
 
@@ -28,23 +30,11 @@ let getRewardMatrix(mdp: MDP<'s, 'a>) : float[,,] =
                 ret[mdp.si s1, mdp.ai a, mdp.si s2] <- mdp.r s1 a s2
     ret
 
-/// Given a state and the calculated Q-table get the value of the state
-/// Absorbtion states are those where 'si s < 0'
-let getStateValue<'s> (si: StateIdx<'s>) (s: 's) (Q: float[,]) : float =
-    Array.max Q[si s, *]
-
-/// Given a starting state an action and the end state what is the value
-/// This is equal to the transition reward plus the discounted (expected) value of the end state
-let getActionToStateValue (discount: float) (si: StateIdx<'s>) (ai: ActionIdx<'a>) (stateFrom: 's) (action: 'a) (stateTo: 's) (R: float[,,])  (Q: float[,]) : float =
-    let transitionReward = R[si stateFrom, ai action, si stateTo]
-    let nextStateValue = getStateValue si stateTo Q
-    transitionReward + discount * nextStateValue
-
 /// Given a starting state and an action it gives the discounted, expected value
 /// Of performing the action
 let getActionValue (discount: float) (mdp: MDP<'s, 'a>) (stateFrom: 's) (action: 'a) (P: float[,,]) (R: float[,,])  (Q: float[,]) : float =
     let prob stateTo = P[mdp.si stateFrom, mdp.ai action, mdp.si stateTo]
-    let value stateTo = getActionToStateValue discount mdp.si mdp.ai stateFrom action stateTo R Q
+    let value stateTo = getActionToStateValue mdp.si mdp.ai R discount stateFrom action stateTo Q
     let probValue stateTo = (prob stateTo) * (value stateTo)
     List.sum (List.map probValue mdp.X)
 
