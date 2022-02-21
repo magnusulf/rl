@@ -66,7 +66,7 @@ let turnRight (action: Action) : Action =
     | Action.Down -> Action.Left
     | Action.Left -> Action.Up
     | Action.Right -> Action.Down
-    | _ -> raise (System.ArgumentException("Error"))
+    | _ -> raise (ArgumentException("Error"))
 
 let turnLeft (action: Action) : Action =
     turnRight (turnRight (turnRight action))
@@ -82,11 +82,15 @@ let btf1 (stateFrom: State) (action: Action) : (State * float) list =
 let tf1: TransitionFunction = convertTransitionFunction btf1
 let rf1 sFrom a sTo: float =
     if (sFrom = (0,0) && sTo=absorbtionMarker) then
-        1
+        10
     else if (sFrom = (0,2) && sTo=absorbtionMarker) then
-        -0.5
-    else
+        -10
+    else if (sFrom = absorbtionMarker) then
         0
+    else if (sFrom = sTo) then
+        0
+    else
+        5
 
 let si (s: State): int =
     if (s = absorbtionMarker) then
@@ -100,10 +104,8 @@ let mdp_a = [Action.Up ; Action.Down ; Action.Left ; Action.Right]
 let mdp = {X = mdp_x ; A = mdp_a ; p = tf1 ; r = rf1 ;
 si = si ; ai = int }
 
-printfn "Hello from F#"
-
-let Q = ValueIteration.valueIteration mdp 0.9
+let Q = ValueIteration.valueIteration mdp 0.8 
 
 for x in mdp.X do
-    //for a in mdp.A do
-    printfn "%s: %.3f" (stateToString x) (Array.max Q[si x, *])
+    for a in mdp.A do
+        printfn "%s %s: %.3f" (stateToString x) (actionToString a) Q[si x, int a]

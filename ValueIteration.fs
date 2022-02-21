@@ -53,10 +53,15 @@ let valueIteration<'s, 'a> (mdp: MDP<'s, 'a>) (discount: float): float[,] =
     let R = getRewardMatrix mdp
     
     let Q: float[,] = Array2D.init (List.length mdp.X) (List.length mdp.A) (fun i j -> 0.0)
-
-    for i in 1 .. 10 do
+    let mutable changes = 1
+    while changes <> 0 do
+        printfn "Iterating"
+        changes <- 0
         for x in mdp.X do
                 for a in mdp.A do
-                    Q[mdp.si x, mdp.ai a] <- getActionValue discount mdp x a P R Q
-
+                    let newVal = getActionValue discount mdp x a P R Q
+                    let oldVal = Q[mdp.si x, mdp.ai a]
+                    if (newVal <> oldVal) then 
+                        changes <- changes + 1
+                    Q[mdp.si x, mdp.ai a] <-  newVal
     Q
