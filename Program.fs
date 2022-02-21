@@ -1,5 +1,7 @@
 ﻿open System
 open ValueIteration
+open QLearning
+open RLCore
 
 // For more information see https://aka.ms/fsharp-console-apps
 type State = int * int
@@ -16,7 +18,7 @@ type MDP = { X : State list; A : Action list; p : TransitionFunction; r : Reward
 
 let absorbtionMarker: State = (-1, -1)
 
-
+/// Konverterer en BaseTransitionFunciton til en almindelig transitionfunction til brug i value iteration
 let convertTransitionFunction (bt: BaseTransitionFunction) : TransitionFunction =
     let tf (s1: State) (a: Action) (s2: State) : float =
         let probs = bt s1 a
@@ -24,6 +26,14 @@ let convertTransitionFunction (bt: BaseTransitionFunction) : TransitionFunction 
         match filtered with
         | n :: rest -> snd n
         | [] -> 0
+    tf
+
+/// Konverterer en BaseTransitionFunciton til en stokastisk transitionfunction til brug i Q-Learning
+let convertTransitionFunction2 (bt: BaseTransitionFunction) : QLearning.TransitionFunction<State, Action> =
+    
+    let tf (s1: State) (a: Action)  : State =
+        let probs = bt s1 a
+        RLCore.getRandomElementWeighted (List.map fst probs) (List.map snd probs)
     tf
 
 let stateToString (s: State) : string =
@@ -71,7 +81,7 @@ let btf1 (stateFrom: State) (action: Action) : (State * float) list =
     else if (stateFrom = (0,0) || stateFrom = (0,2)) then
         [absorbtionMarker, 1]
     else
-        [(applyActionDirectly stateFrom action), 0.8 ; (applyActionDirectly stateFrom (turnRight action)), 0.1 ; (applyActionDirectly stateFrom (turnLeft action)), 0.1]
+        [(applyActionDirectly stateFrom action), 1 ; (applyActionDirectly stateFrom (turnRight action)), 0.0 ; (applyActionDirectly stateFrom (turnLeft action)), 0.0]
 
 let tf1: TransitionFunction = convertTransitionFunction btf1
 let rf1 sFrom a sTo: float =
@@ -84,7 +94,7 @@ let rf1 sFrom a sTo: float =
     else if (sFrom = sTo) then
         0
     else
-        5
+        0
 
 let si (s: State): int =
     if (s = absorbtionMarker) then
@@ -95,11 +105,21 @@ let si (s: State): int =
 let mdp_x = [(0,0); (0,1); (0,2); (1,0); (1,1); (1,2); (2,0); (2,1); (2,2) ; absorbtionMarker]
 let mdp_a = [Action.Up ; Action.Down ; Action.Left ; Action.Right]
 
-let mdp = {X = mdp_x ; A = mdp_a ; p = tf1 ; r = rf1 ;
-si = si ; ai = int }
+let mdp: ValueIteration.MDP<State, Action> = {X = mdp_x ; A = mdp_a ; p = tf1 ; r = rf1 ;
+si = si ; ai = int }    
 
-let Q = ValueIteration.valueIteration mdp 0.8 
+let policy (s: State) : Action = LanguagePrimitives.EnumOfValue<int, Action>(RLCore.rand.NextInt64(4) |> int)
+
+let Q = ValueIteration.valueIteration mdp 0.9 
 
 for x in mdp.X do
     for a in mdp.A do
         printfn "%s %s: %.3f" (stateToString x) (actionToString a) Q[si x, int a]
+
+let env: QLearning.Env<State, Action> = {X = mdp_x ; A = mdp_a ; absorbtionStates = [absorbtionMarker] ;
+p = (convertTransitionFunction2 btf1) ; r = rf1 ; si = si ; ai = int}
+let Q2 = QLearning.qLearn env policy (1,1) 0.9
+printfn "Q-learning"
+for x in mdp.X do
+    for a in mdp.A do
+        printfn "%s %s: %.3f" (stateToString x) (actionToString a) Q2[si x, int a]
