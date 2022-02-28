@@ -4,6 +4,8 @@ open System
 
 type StateIdx<'s> = 's->int
 type ActionIdx<'a> = 'a->int
+type BaseTransitionFunction<'s, 'a> = 's->'a->(('s * float) list)
+type TransitionFunction<'s, 'a>= 's->'a->'s->float
 
 let rand = Random()
 
@@ -16,6 +18,15 @@ let rec getRandomElementWeightedSub (lst: 'a list) (weigths: float list) (r: flo
 let getRandomElementWeighted (lst: 'a list) (weigths: float list): 'a =
     getRandomElementWeightedSub lst weigths (rand.NextDouble() * (List.sum weigths))
 
+/// Konverterer en BaseTransitionFunciton til en almindelig transitionfunction til brug i value iteration
+let convertTransitionFunction<'s, 'a when 's : equality> (bt: BaseTransitionFunction<'s, 'a>) : TransitionFunction<'s, 'a> =
+    let tf (s1: 's) (a: 'a) (s2: 's) : float =
+        let probs: ('s * float) list = bt s1 a
+        let filtered = List.filter (fun x -> fst x = s2) probs
+        match filtered with
+        | n :: rest -> snd n
+        | [] -> 0
+    tf
 
 // Dealing with Q-values
 

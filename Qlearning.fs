@@ -10,6 +10,13 @@ type Env<'s, 'a when 's : equality> = { X : 's list; absorbtionStates: 's list ;
 p : TransitionFunction<'s, 'a>; r : RewardFunction<'s, 'a> ;
 si: StateIdx<'s> ; ai: ActionIdx<'a> }
 
+/// Konverterer en BaseTransitionFunciton til en stokastisk transitionfunction til brug i Q-Learning
+let convertTransitionFunctionStochastic<'s, 'a when 's : equality> (bt: BaseTransitionFunction<'s, 'a>) : TransitionFunction<'s, 'a> =
+    let tf s1 a : 's =
+        let probs = bt s1 a
+        RLCore.getRandomElementWeighted (List.map fst probs) (List.map snd probs)
+    tf
+
 let calcRewardMatrix(env: Env<'s, 'a>) : float[,,] =
     let ret: float[,,] = Array3D.init (List.length env.X) (List.length env.A) (List.length env.X) (fun i j k -> 0.0)
     for s1 in env.X do
