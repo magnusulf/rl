@@ -105,3 +105,12 @@ let stateIndex xSize ySize state : int =
         (fst state) * (ySize) + (snd state)
 
 let actionIndex (action: Action) : int = int action
+
+let printQ maxX maxY (Q: float[,]) : unit =
+    for y in (maxY-1) .. -1 .. 0 do
+        let vals: string = [for x in 0..(maxX-1) do getStateValue (stateIndex maxX maxY) (x,y) Q] |>
+                                List.map (sprintf "+%.2f") |>
+                                String.concat " " |>
+                                fun s -> s.Replace("+-", "-")
+        printfn "%s" vals
+    0.0 |> ignore

@@ -21,11 +21,10 @@ let getRandomElementWeighted (lst: 'a list) (weigths: float list): 'a =
 /// Konverterer en BaseTransitionFunciton til en almindelig transitionfunction til brug i value iteration
 let convertTransitionFunction<'s, 'a when 's : equality> (bt: BaseTransitionFunction<'s, 'a>) : TransitionFunction<'s, 'a> =
     let tf (s1: 's) (a: 'a) (s2: 's) : float =
-        let probs: ('s * float) list = bt s1 a
-        let filtered = List.filter (fun x -> fst x = s2) probs
-        match filtered with
-        | n :: rest -> snd n
-        | [] -> 0
+        bt s1 a |> //Get state, probability pairs from the base transistion function (the same sate can occur multiple times)
+        List.filter (fun x -> fst x = s2) |> // The state must match our target state
+        List.map snd |> // Get the probabilites and sum them
+        List.sum
     tf
 
 // Dealing with Q-values
