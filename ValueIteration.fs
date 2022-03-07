@@ -9,12 +9,13 @@ type ActionIdx<'a> = 'a->int
 type Reward = float
 type TransitionFunction<'s, 'a> = 's->'a->'s->float
 type RewardFunction<'s, 'a> = 's->'a->'s->Reward
-type MDP<'s, 'a> = { X : 's list; A : 'a list; p : TransitionFunction<'s, 'a>; r : RewardFunction<'s, 'a> ; si: StateIdx<'s> ; ai: ActionIdx<'a> }
+type MDP<'s, 'a> = { X : 's list; maxStateIdx: int ; A : 'a list;
+p : TransitionFunction<'s, 'a>; r : RewardFunction<'s, 'a> ; si: StateIdx<'s> ; ai: ActionIdx<'a> }
 
 /// Calculates a matrix that stores the transition probabilities
 /// We store it so it needs not be calculated often
 let getTransitionMatrix(mdp: MDP<'s, 'a>) : float[,,] =
-    let ret: float[,,] = Array3D.init (List.length mdp.X) (List.length mdp.A) (List.length mdp.X) (fun i j k -> 0.0)
+    let ret: float[,,] = Array3D.init (mdp.maxStateIdx + 1) (List.length mdp.A) (mdp.maxStateIdx + 1) (fun i j k -> 0.0)
     for s1 in mdp.X do
         for a in mdp.A do
             for s2 in mdp.X do
@@ -24,7 +25,7 @@ let getTransitionMatrix(mdp: MDP<'s, 'a>) : float[,,] =
 /// Calculates a matrix that stores the rewards
 /// We store it so it needs not be calculated often
 let getRewardMatrix(mdp: MDP<'s, 'a>) : float[,,] =
-    let ret: float[,,] = Array3D.init (List.length mdp.X) (List.length mdp.A) (List.length mdp.X) (fun i j k -> 0.0)
+    let ret: float[,,] = Array3D.init (mdp.maxStateIdx + 1) (List.length mdp.A) (mdp.maxStateIdx + 1) (fun i j k -> 0.0)
     for s1 in mdp.X do
         for a in mdp.A do
             for s2 in mdp.X do
@@ -42,10 +43,9 @@ let getActionValue (discount: float) (mdp: MDP<'s, 'a>) (stateFrom: 's) (action:
 let valueIteration<'s, 'a> (mdp: MDP<'s, 'a>) (discount: float): float[,] =
     let P = getTransitionMatrix mdp
     let R = getRewardMatrix mdp
-    let Q: float[,] = Array2D.init (List.length mdp.X) (List.length mdp.A) (fun i j -> 0.0)
+    let Q: float[,] = Array2D.init (mdp.maxStateIdx + 1) (List.length mdp.A) (fun i j -> 0.0)
     let mutable changes = 1
     while changes <> 0 do
-        printfn "Iterating"
 
         changes <- 0
         for x in mdp.X do

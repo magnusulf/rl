@@ -6,6 +6,7 @@ open RLCore
 
 let createMdp maximumX maximumY blockedStates absorbitionStates turnProbability stayProbability livingReward: MDP<State, Action> = 
     let mdp_x = GridWorld.getStates maximumX maximumY blockedStates
+    let maxStateIdx = (List.length mdp_x) + (List.length blockedStates) - 1;
     let mdp_a = GridWorld.getActions
     let mdp_tf: RLCore.TransitionFunction<GridWorld.State, GridWorld.Action> =
         GridWorld.transitionfunction maximumX maximumY blockedStates absorbitionStates turnProbability stayProbability
@@ -13,10 +14,11 @@ let createMdp maximumX maximumY blockedStates absorbitionStates turnProbability 
         GridWorld.rewardFunction absorbitionStates livingReward
     let mdp_si = GridWorld.stateIndex maximumX maximumY
     let mdp_ai = GridWorld.actionIndex
-    {X = mdp_x ; A = mdp_a ; p = mdp_tf ; r = mdp_rf ; si = mdp_si ; ai = mdp_ai }   
+    {X = mdp_x ; maxStateIdx = maxStateIdx ; A = mdp_a ; p = mdp_tf ; r = mdp_rf ; si = mdp_si ; ai = mdp_ai }   
 
 let createEnv maximumX maximumY blockedStates absorbitionStates turnProbability stayProbability livingReward: Env<State, Action> = 
     let mdp_x = GridWorld.getStates maximumX maximumY blockedStates
+    let maxStateIdx = (List.length mdp_x) + (List.length blockedStates) - 1;
     let mdp_a = GridWorld.getActions
     let mdp_tfs: QLearning.TransitionFunction<GridWorld.State, GridWorld.Action> =
         GridWorld.transitionfunctionStochastic maximumX maximumY blockedStates absorbitionStates turnProbability stayProbability
@@ -24,7 +26,7 @@ let createEnv maximumX maximumY blockedStates absorbitionStates turnProbability 
         GridWorld.rewardFunction absorbitionStates livingReward
     let mdp_si = GridWorld.stateIndex maximumX maximumY
     let mdp_ai = GridWorld.actionIndex
-    {X = mdp_x ; A = mdp_a ; absorbtionStates = [GridWorld.absorbtionMarker] ;
+    {X = mdp_x ; maxStateIdx = maxStateIdx; A = mdp_a ; absorbtionStates = [GridWorld.absorbtionMarker] ;
     p = mdp_tfs ; r = mdp_rf ; si = mdp_si ; ai = mdp_ai}    
 
 let policyRandom (Q: float[,]) (s: GridWorld.State) : GridWorld.Action = LanguagePrimitives.EnumOfValue<int, GridWorld.Action>(RLCore.rand.NextInt64(4) |> int)
@@ -43,24 +45,32 @@ let policyEpsilonGreedy epsilon (si: StateIdx<State>) (Q: float[,]) (s: GridWorl
 let runGridworld maximumX maximumY blockedStates absorbitionStates initialState turnProbability stayProbability livingReward discount : unit =
     let mdp = createMdp maximumX maximumY blockedStates absorbitionStates turnProbability stayProbability livingReward
 
-    // let Q = ValueIteration.valueIteration mdp discount
+    let sw1 = System.Diagnostics.Stopwatch.StartNew()
+    let Q = ValueIteration.valueIteration mdp discount
 
-    // printfn "ValueIteration"
-    // GridWorld.printV maximumX maximumY Q
-    // GridWorld.printActions maximumX maximumY Q blockedStates
+    printfn "ValueIteration"
+    GridWorld.printV maximumX maximumY Q
+    GridWorld.printActions maximumX maximumY Q blockedStates
+
+    sw1.Stop()
+    printfn "millis: %f" sw1.Elapsed.TotalMilliseconds
     
 
     let env = createEnv maximumX maximumY blockedStates absorbitionStates turnProbability stayProbability livingReward
 
-    // printfn "Q learning random"    
-    // let Q1 = QLearning.qLearn env policyRandom initialState discount
-    // GridWorld.printV maximumX maximumY Q1
-    // GridWorld.printActions maximumX maximumY Q1 blockedStates
+    printfn "Q learning random"    
+    let Q1 = QLearning.qLearn env policyRandom initialState discount
+    GridWorld.printV maximumX maximumY Q1
+    GridWorld.printActions maximumX maximumY Q1 blockedStates
 
+    let sw2 = System.Diagnostics.Stopwatch.StartNew()
     printfn "Q learning epsilon greedy"
-    let Q2 = QLearning.qLearn env (policyEpsilonGreedy 0.25 env.si) initialState discount
+    let Q2 = QLearning.qLearn env (policyEpsilonGreedy 0.20 env.si) initialState discount
     GridWorld.printV maximumX maximumY Q2
     GridWorld.printActions maximumX maximumY Q2 blockedStates
+    
+    sw2.Stop()
+    printfn "millis: %f" sw2.Elapsed.TotalMilliseconds
 
 let runGridworld1 (a: int) : unit =
     let maximumX = 4

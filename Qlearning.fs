@@ -7,7 +7,7 @@ type Q = Reward[,]
 type TransitionFunction<'s, 'a> = 's->'a->'s
 type Policy<'s, 'a> = Q->'s->'a
 type RewardFunction<'s, 'a> = 's->'a->'s->Reward
-type Env<'s, 'a when 's : equality> = { X : 's list; absorbtionStates: 's list ; A : 'a list;
+type Env<'s, 'a when 's : equality> = { X : 's list; maxStateIdx: int; absorbtionStates: 's list ; A : 'a list;
 p : TransitionFunction<'s, 'a>; r : RewardFunction<'s, 'a> ;
 si: StateIdx<'s> ; ai: ActionIdx<'a> }
 
@@ -19,7 +19,7 @@ let convertTransitionFunctionStochastic<'s, 'a when 's : equality> (bt: BaseTran
     tf
 
 let calcRewardMatrix(env: Env<'s, 'a>) : float[,,] =
-    let ret: float[,,] = Array3D.init (List.length env.X) (List.length env.A) (List.length env.X) (fun i j k -> 0.0)
+    let ret: float[,,] = Array3D.init (env.maxStateIdx+1) (List.length env.A) (env.maxStateIdx+1) (fun i j k -> 0.0)
     for s1 in env.X do
         for a in env.A do
             for s2 in env.X do
@@ -30,8 +30,8 @@ let qLearn<'s, 'a when 's : equality> (env: Env<'s, 'a>) (policy: Policy<'s, 'a>
     let R = calcRewardMatrix env
     let getActionStateValue = getActionToStateValue env.si env.ai R discount
 
-    let Q = Array2D.zeroCreate (List.length env.X) (List.length env.A)
-    let visitCount = Array2D.zeroCreate (List.length env.X) (List.length env.A)
+    let Q = Array2D.zeroCreate (env.maxStateIdx+1) (List.length env.A)
+    let visitCount = Array2D.zeroCreate (env.maxStateIdx+1) (List.length env.A)
     let mutable currentState = initialState
     let mutable accReward = 0.0
     for i in 1..1000000 do

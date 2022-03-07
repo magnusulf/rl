@@ -31,7 +31,8 @@ let actionToString (a: Action) : string =
 let getStates xSize ySize (blockedStates: State list) =
     absorbtionMarker :: // absorbtionMarker must be included
     [for x in 0 .. xSize-1 do
-        for y in 0 .. ySize-1 -> (x, y) ]
+        for y in 0 .. ySize-1 -> (x, y) ] |>
+    List.filter (fun x -> not (List.contains x blockedStates))
 
 let getActions: Action list = [Action.Up; Action.Down; Action.Left; Action.Right]
 
