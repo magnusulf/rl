@@ -8,8 +8,8 @@
   <ItemGroup>
     <Compile Include="RLCore.fs" />
     <Compile Include="Qlearning.fs" />
-    <Compile Include="ValueIteration.fs" />
     <Compile Include="GridWorld.fs" />
+    <Compile Include="ValueIteration.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 

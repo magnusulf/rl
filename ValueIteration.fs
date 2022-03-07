@@ -1,6 +1,7 @@
 module ValueIteration
 
 open RLCore
+open GridWorld
 
 type StateIdx<'s> = 's->int
 type ActionIdx<'a> = 'a->int
@@ -41,11 +42,11 @@ let getActionValue (discount: float) (mdp: MDP<'s, 'a>) (stateFrom: 's) (action:
 let valueIteration<'s, 'a> (mdp: MDP<'s, 'a>) (discount: float): float[,] =
     let P = getTransitionMatrix mdp
     let R = getRewardMatrix mdp
-    
     let Q: float[,] = Array2D.init (List.length mdp.X) (List.length mdp.A) (fun i j -> 0.0)
     let mutable changes = 1
     while changes <> 0 do
         printfn "Iterating"
+
         changes <- 0
         for x in mdp.X do
                 for a in mdp.A do

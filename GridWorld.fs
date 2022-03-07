@@ -1,7 +1,6 @@
 module GridWorld
 
 open System
-open ValueIteration
 open QLearning
 open RLCore
 
@@ -21,16 +20,16 @@ let stateToString (s: State) : string =
 
 let actionToString (a: Action) : string =
     match a with
-    | Action.Up -> "Up"
-    | Action.Down -> "Down"
-    | Action.Left -> "Left"
+    | Action.Up -> "Up   "
+    | Action.Down -> "Down "
+    | Action.Left -> "Left "
     | Action.Right -> "Right"
     | _ -> ""
 
 /// Gets all the states for a world of the specified size
 /// It is simply all combinations of x and y as well as the absorbtionMarker
 let getStates xSize ySize (blockedStates: State list) =
-    absorbtionMarker :: // absorbtionMarker must me included
+    absorbtionMarker :: // absorbtionMarker must be included
     [for x in 0 .. xSize-1 do
         for y in 0 .. ySize-1 -> (x, y) ]
 
@@ -69,25 +68,26 @@ let applyActionDirectly xSize ySize (blockedStates: State list) stateFrom action
     keepWithinBorders xSize ySize |>
     disallowBlockedState blockedStates stateFrom
 
-let baseTransitionFunction xSize ySize (blockedStates: State list) (absorbitionStates: State list) (turnProbability: float) stateFrom action : (State * float) list =
+let baseTransitionFunction xSize ySize (blockedStates: State list) (absorbitionStates: State list) (turnProbability: float)  (stayProbability: float) stateFrom action : (State * float) list =
     let apply = applyActionDirectly xSize ySize blockedStates
     if (stateFrom = absorbtionMarker) then // You cannot move away from the absorbtionMarker
         [absorbtionMarker, 1] 
     else if (List.contains stateFrom absorbitionStates) then // If this is an absorbtion state then we go to the absorbtion marker
         [absorbtionMarker, 1] 
     else
-        [(apply stateFrom action), 1.0 - (2.0 * turnProbability) ; // Doing the action
+        [(apply stateFrom action), 1.0 - (2.0 * turnProbability + stayProbability) ; // Doing the action
          (apply stateFrom (turnRight action)), turnProbability ; // Turning right
-          (apply stateFrom (turnLeft action)), turnProbability] // Turning left
+          (apply stateFrom (turnLeft action)), turnProbability ; // Turning left
+          stateFrom, stayProbability] // Stay
 
-let transitionfunction xSize ySize (blockedStates: State list) (absorbitionStates: Map<State, Reward>) (turnProbability: float) : State->Action->State->float =
+let transitionfunction xSize ySize (blockedStates: State list) (absorbitionStates: Map<State, Reward>) (turnProbability: float) (stayProbability: float) : State->Action->State->float =
     let abStates = absorbitionStates |> Map.toList |> List.map fst
-    let bt = baseTransitionFunction xSize ySize blockedStates abStates turnProbability
+    let bt = baseTransitionFunction xSize ySize blockedStates abStates turnProbability stayProbability
     RLCore.convertTransitionFunction bt
 
-let transitionfunctionStochastic xSize ySize (blockedStates: State list) (absorbitionStates: Map<State, Reward>) (turnProbability: float) : State->Action->State =
+let transitionfunctionStochastic xSize ySize (blockedStates: State list) (absorbitionStates: Map<State, Reward>) (turnProbability: float)  (stayProbability: float): State->Action->State =
     let abStates = absorbitionStates |> Map.toList |> List.map fst
-    let bt = baseTransitionFunction xSize ySize blockedStates abStates turnProbability
+    let bt = baseTransitionFunction xSize ySize blockedStates abStates turnProbability stayProbability
     QLearning.convertTransitionFunctionStochastic bt
 
 let rewardFunction (absorbitionStates: Map<State, Reward>) (livingReward: float) stateFrom action stateTo : Reward =
@@ -106,11 +106,31 @@ let stateIndex xSize ySize state : int =
 
 let actionIndex (action: Action) : int = int action
 
-let printQ maxX maxY (Q: float[,]) : unit =
+let printV maxX maxY (Q: float[,]) : unit =
     for y in (maxY-1) .. -1 .. 0 do
         let vals: string = [for x in 0..(maxX-1) do getStateValue (stateIndex maxX maxY) (x,y) Q] |>
                                 List.map (sprintf "+%.2f") |>
                                 String.concat " " |>
                                 fun s -> s.Replace("+-", "-")
+        printfn "%s" vals
+    0.0 |> ignore
+
+
+let stateQToString (maxX: int) (maxY: int) (Q: float[,]) (blockedStates: State list) x y : string =
+    if (List.contains (x,y) blockedStates) then
+        "Block"
+    else
+        let idx = stateIndex maxX maxY (x,y)
+        Q[idx, *] |>
+                Seq.mapi (fun i v -> i, v) |> Seq.maxBy snd |> fst |>
+                LanguagePrimitives.EnumOfValue<int, Action> |>
+                actionToString
+
+
+let printActions maxX maxY (Q: float[,]) (blockedStates: State list) : unit =
+    for y in (maxY-1) .. -1 .. 0 do
+        let vals: string =
+            [for x in 0..(maxX-1) do (stateQToString maxX maxY Q blockedStates x y)] |>
+                String.concat " "
         printfn "%s" vals
     0.0 |> ignore
