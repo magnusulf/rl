@@ -1,0 +1,28 @@
+from typing import Any, Callable, TypeVar
+
+# A base transition function is a transition function that takes a state
+# and an action and returns a list of tuples containing the ending states and
+# the probability of ending in each of those (should sum to 1).
+# Any state not in the list has probability 0 of being the destination
+
+S = TypeVar('S')
+A = TypeVar('A')
+
+def baseTransitionFunctionToNormalTransitionFunction(base: 'Callable[[S, A], list[tuple[S, float]]]') -> 'Callable[[S, A, S], float]':
+    def normal(sFrom: S, a: A, sTo: S) -> float:
+        pairs = base(sFrom, a) # list of tuples with state and probability
+        return sum([x[1] for x in pairs if x[0]== sTo])
+    return normal
+
+# Given a state and the calculated Q-table get the value of the state
+# Which is the action giving the maximum value
+def getStateValue(stateIdx: 'Callable[[S], int]', state: S, Q: 'list[list[float]]' ) -> float:
+    return max(Q[stateIdx(state)])
+
+# Given a starting state an action and the end state what is the value
+# This is equal to the transition reward plus the discounted (expected) value of the end state
+def getActionToStateValue(stateIdx: ('Callable[[S], int]'), actionIdx: 'Callable[[A], int]', R: 'list[list[float]]',
+                        discount: float, stateFrom: S, action: A, stateTo: S, Q: 'list[list[float]]') -> float:
+    transitionReward: float = R[stateIdx(stateFrom)][actionIdx(action)]
+    nextStateValue: float = getStateValue(stateIdx, stateTo, Q)
+    return transitionReward + discount * nextStateValue
