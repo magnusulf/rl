@@ -11,7 +11,7 @@ class gridworld(MDP.mdp['tuple[int, int]', str]):
         self.max_x = max_x
         self.max_y = max_y
         states = [(x,y) for x in range(max_x) for y in range(max_y)]
-        actions = ['up', 'down', 'left', 'right']
+        actions = ['up   ', 'down ', 'left ', 'right']
         self.blocked_states: 'list[tuple[int, int]]' = blocked
         self.absorption_states: 'dict[tuple[int, int], float]' = absorption
         self.starting_state = start
@@ -22,19 +22,17 @@ class gridworld(MDP.mdp['tuple[int, int]', str]):
             return self.absorption_states[s1]
         return 0
 
-    def transition(self, s1: 'tuple[int, int]', a: str, s2: 'tuple[int, int]'):
+    def baseTransition(self, s1: 'tuple[int, int]', a: str) -> 'list[tuple[tuple[int, int], float]]':
         # if absorption state
         if (s1 in self.absorption_states):
-            if (s2 == self.starting_state): 
-                return 1
-            return 0
+            return [(self.starting_state, 1.0)]
         target: 'tuple[int, int]' = 0,0
         # else try to move
-        if (a == 'up'):
+        if (a == 'up   '):
             target = (s1[0], s1[1]+1)
-        if (a == 'down'):
+        if (a == 'down '):
             target = (s1[0], s1[1]-1)
-        if (a == 'left'):
+        if (a == 'left '):
             target = (s1[0]-1, s1[1])
         if (a == 'right'):
             target = (s1[0]+1, s1[1])
@@ -42,32 +40,13 @@ class gridworld(MDP.mdp['tuple[int, int]', str]):
         if (target in self.blocked_states or not self.insideBoundaries(target)):
             target = s1
         
-        if (target == s2):
-            return 1
-        return 0
+        return [(target, 1.0)]
 
     def insideBoundaries(self, s):
         return (s[0] >= 0 and s[1] >= 0 and s[0] < self.max_x and s[1] < self.max_y)
 
-    def stateIdx(self, s: 'tuple[int, int]'):
-        return (s[0]) * (self.max_y) + (s[1])
-
-    def actionIdx(self, a):
-        if (a == 'up'):
-            return 0
-        elif (a == 'down'):
-            return 1
-        elif (a == 'left'):
-            return 2
-        elif (a == 'right'):
-            return 3
-
-def idxToAction(action: int) -> str :
-    if (action == 0): return 'up   '
-    if (action == 1): return 'down '
-    if (action == 2): return 'left '
-    if (action == 3): return 'right'
-    return ''
+    def idxToAction(self, action: int) -> str :
+        return self.actions[action]
 
 def printV (mdp: gridworld, Q):
     for y in range(mdp.max_y-1, -1, -1):
@@ -83,7 +62,7 @@ def stateQToString (mdp: gridworld, Q: 'list[list[float]]', state: 'tuple[int, i
         idx = mdp.stateIdx(state)
         actionValues = Q[idx]
         aIdx: int = cast(int, np.argmax(actionValues))
-        return idxToAction(aIdx)
+        return mdp.idxToAction(aIdx)
 
 
 def printActions(mdp: gridworld, Q: 'list[list[float]]') :

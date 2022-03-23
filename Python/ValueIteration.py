@@ -9,7 +9,8 @@ A = TypeVar('A')
 #  Calculates a matrix that stores the transition probabilities
 # We store it so it needs not be calculated often
 def getTransitionMatrix(mdp: MDP.mdp) -> 'list[list[list[float]]]':
-    return [[[mdp.transition(s1, a, s2) for s2 in mdp.states] for a in mdp.actions] for s1 in mdp.states]
+    transitionF = RLCore.baseTransitionFunctionToNormalTransitionFunction(mdp.baseTransition)
+    return [[[transitionF(s1, a, s2) for s2 in mdp.states] for a in mdp.actions] for s1 in mdp.states]
 
 # Calculates a matrix that stores the rewards
 # We store it so it needs not be calculated often

@@ -11,14 +11,17 @@ class mdp(Generic[S, A]):
         self.discount = discount
         self.maxStateIdx = maxStateIdx
 
-    def transition(self, s1: S, a: A, s2: S) -> float:
-        return 0
+    # Due to the implementation of this it is not a true MDP
+    # but this one is the easiest to define and can easily be turned
+    # to a real transition function or into a stochastic one
+    def baseTransition(self, s1: S, a: A) -> 'list[tuple[S, float]]':
+        return []
 
     def reward(self, s: S, a: A) -> float:
         return 0
 
     def stateIdx(self, s: S) -> int:
-        return 0
+        return self.states.index(s)
 
     def actionIdx(self, a: A) -> int:
-        return 0
+        return self.actions.index(a)
