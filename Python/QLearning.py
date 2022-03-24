@@ -9,21 +9,15 @@ A = TypeVar('A')
 
 Policy = Callable[[List[List[float]], S], A]
 
-
-# Calculates a matrix that stores the rewards
-# We store it so it needs not be calculated often
-def getRewardMatrix(mdp: MDP.mdp) -> 'list[list[float]]':
-    return [[mdp.reward(s, a) for a in mdp.actions] for s in mdp.states]
-
 def policyRandom(actions: 'list[A]') -> 'Callable[[list[list[float]], S], A]' :
     def pol(Q: 'list[list[float]]', s: S):
         return actions[rnd.randint(0, len(actions)-1)]
     return pol
 
-def policyEpsilonGreedy(mdp: MDP.mdp, epsilon: float) -> 'Callable[[list[list[float]], S], A]' :
+def policyEpsilonGreedy(mdp: MDP.mdp[S, A], epsilon: float) -> 'Callable[[list[list[float]], S], A]' :
     def pol(Q: 'list[list[float]]', s: S):
         rand = rnd.random()
-        if (rand <= epsilon): # Random when less than epsilon
+        if (rand < epsilon): # Random when less than epsilon
             return mdp.actions[rnd.randint(0, len(mdp.actions)-1)]
         else:
             Qvalues = Q[mdp.stateIdx(s)]
@@ -36,7 +30,7 @@ def policyEpsilonGreedy(mdp: MDP.mdp, epsilon: float) -> 'Callable[[list[list[fl
         
 
 def qLearn(mdp: MDP.mdp[S, A], policy: Policy[S, A], initialState: S) -> 'list[list[float]]' :
-    R = getRewardMatrix(mdp)
+    R = MDP.getRewardMatrix(mdp)
     getActionStateValue = lambda s1, a, s2, Q: RLCore.getActionToStateValue(mdp.stateIdx, mdp.actionIdx, R, mdp.discount, s1, a, s2, Q)
     transitionF = RLCore.baseTransitionFunctionToStochasticTransitionFunction(mdp.baseTransition)
     maxQ = 1.0/(1.0-mdp.discount)

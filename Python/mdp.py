@@ -25,3 +25,7 @@ class mdp(Generic[S, A]):
 
     def actionIdx(self, a: A) -> int:
         return self.actions.index(a)
+
+
+def getRewardMatrix(mdp: mdp) -> 'list[list[float]]':
+    return [[mdp.reward(s, a) for a in mdp.actions] for s in mdp.states]

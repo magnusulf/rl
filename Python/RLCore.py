@@ -42,3 +42,5 @@ def getActionToStateValue(stateIdx: ('Callable[[S], int]'), actionIdx: 'Callable
     transitionReward: float = R[stateIdx(stateFrom)][actionIdx(action)]
     nextStateValue: float = getStateValue(stateIdx, stateTo, Q)
     return transitionReward + discount * nextStateValue
+
+    

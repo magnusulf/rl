@@ -12,12 +12,6 @@ def getTransitionMatrix(mdp: MDP.mdp) -> 'list[list[list[float]]]':
     transitionF = RLCore.baseTransitionFunctionToNormalTransitionFunction(mdp.baseTransition)
     return [[[transitionF(s1, a, s2) for s2 in mdp.states] for a in mdp.actions] for s1 in mdp.states]
 
-# Calculates a matrix that stores the rewards
-# We store it so it needs not be calculated often
-def getRewardMatrix(mdp: MDP.mdp) -> 'list[list[float]]':
-    return [[mdp.reward(s, a) for a in mdp.actions] for s in mdp.states]
-
-
 # Given a starting state and an action it gives the discounted, expected value
 # Of performing the action
 def getActionValue(discount, mdp, stateFrom, action, P, R, Q):
@@ -29,7 +23,7 @@ def getActionValue(discount, mdp, stateFrom, action, P, R, Q):
 
 def valueIteration(mdp: MDP.mdp) -> 'list[list[float]]':
     P = getTransitionMatrix(mdp)
-    R = getRewardMatrix(mdp)
+    R = MDP.getRewardMatrix(mdp)
     Q = [[0.0 for _ in mdp.actions] for _ in range(mdp.maxStateIdx + 1)]
     changes = 1
     while (changes != 0):

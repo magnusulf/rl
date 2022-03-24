@@ -11,7 +11,7 @@ class gridworld(MDP.mdp['tuple[int, int]', str]):
         self.max_x = max_x
         self.max_y = max_y
         states = [(x,y) for x in range(max_x) for y in range(max_y)]
-        actions = ['up   ', 'down ', 'left ', 'right']
+        actions = ['down ', 'up   ', 'left ', 'right']
         self.blocked_states: 'list[tuple[int, int]]' = blocked
         self.absorption_states: 'dict[tuple[int, int], float]' = absorption
         self.starting_state = start
