@@ -5,11 +5,10 @@ S = TypeVar('S')
 A = TypeVar('A')
 
 class mdp(Generic[S, A]):
-    def __init__(self, states: 'list[S]', actions: 'list[A]', discount: float, maxStateIdx: int):
+    def __init__(self, states: 'list[S]', actions: 'list[A]', discount: float):
         self.states: 'list[S]' = states
         self.actions: 'list[A]' = actions
         self.discount = discount
-        self.maxStateIdx = maxStateIdx
 
     # Due to the implementation of this it is not a true MDP
     # but this one is the easiest to define and can easily be turned

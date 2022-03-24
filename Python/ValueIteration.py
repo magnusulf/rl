@@ -24,7 +24,7 @@ def getActionValue(discount, mdp, stateFrom, action, P, R, Q):
 def valueIteration(mdp: MDP.mdp) -> 'list[list[float]]':
     P = getTransitionMatrix(mdp)
     R = MDP.getRewardMatrix(mdp)
-    Q = [[0.0 for _ in mdp.actions] for _ in range(mdp.maxStateIdx + 1)]
+    Q = [[0.0 for _ in mdp.actions] for _ in mdp.states]
     changes = 1
     while (changes != 0):
         changes = 0

@@ -11,11 +11,11 @@ class gridworld(MDP.mdp['tuple[int, int]', str]):
         self.max_x = max_x
         self.max_y = max_y
         states = [(x,y) for x in range(max_x) for y in range(max_y)]
-        actions = ['down ', 'up   ', 'left ', 'right']
+        actions = ['up   ', 'down ', 'left ', 'right']
         self.blocked_states: 'list[tuple[int, int]]' = blocked
         self.absorption_states: 'dict[tuple[int, int], float]' = absorption
         self.starting_state = start
-        MDP.mdp.__init__(self, states, actions, discount, max_x * max_y - 1)
+        MDP.mdp.__init__(self, states, actions, discount)
 
     def reward(self, s1, a):
         if (s1 in self.absorption_states):
