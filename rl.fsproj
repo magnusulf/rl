@@ -9,6 +9,7 @@
     <Compile Include="RLCore.fs" />
     <Compile Include="Qlearning.fs" />
     <Compile Include="GridWorld.fs" />
+    <Compile Include="RiverSwim.fs" />
     <Compile Include="ValueIteration.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>

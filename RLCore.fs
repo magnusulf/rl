@@ -36,7 +36,7 @@ let getStateValue<'s> (si: StateIdx<'s>) (s: 's) (Q: float[,]) : float =
 
 /// Given a starting state an action and the end state what is the value
 /// This is equal to the transition reward plus the discounted (expected) value of the end state
-let getActionToStateValue<'s, 'a> (si: StateIdx<'s>) (ai: ActionIdx<'a>) (R: float[,,]) (discount: float) (stateFrom: 's) (action: 'a) (stateTo: 's) (Q: float[,]) : float =
-    let transitionReward = R[si stateFrom, ai action, si stateTo]
+let getActionToStateValue<'s, 'a> (si: StateIdx<'s>) (ai: ActionIdx<'a>) (R: float[,]) (discount: float) (stateFrom: 's) (action: 'a) (stateTo: 's) (Q: float[,]) : float =
+    let transitionReward = R[si stateFrom, ai action]
     let nextStateValue = getStateValue si stateTo Q
     transitionReward + discount * nextStateValue
