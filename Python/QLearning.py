@@ -21,11 +21,8 @@ def policyEpsilonGreedy(mdp: MDP.mdp[S, A], epsilon: float) -> 'Callable[[list[l
             return mdp.actions[rnd.randint(0, len(mdp.actions)-1)]
         else:
             Qvalues = Q[mdp.stateIdx(s)]
-            if (sum(Qvalues) < 0.01): # Random when we barely know something
-                return mdp.actions[rnd.randint(0, len(mdp.actions)-1)]
-            else:
-                idx = np.argmax(Qvalues)
-                return mdp.actions[idx]
+            idx = np.argmax(Qvalues)
+            return mdp.actions[idx]
     return pol
         
 
@@ -38,7 +35,7 @@ def qLearn(mdp: MDP.mdp[S, A], policy: Policy[S, A], initialState: S) -> 'list[l
     visitCount = [[0 for _ in mdp.actions] for _ in mdp.states]
     currentState = initialState
     accReward = 0.0
-    for i in range(2_000_000):
+    for i in range(1_000_000):
         a = policy(Q, currentState)
         nextState = transitionF(currentState, a)
         reward = getActionStateValue(currentState, a, nextState, Q)

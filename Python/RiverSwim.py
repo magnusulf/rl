@@ -40,8 +40,8 @@ def idxToAction(action: int) -> str :
     return ['left ', 'right'][action]
 
 
-def printV(Q: 'list[list[float]]') :
-    print(' '.join(["+{:.2f}".format(max(Q[x])) for x in range(len(Q))]).replace('+-', '-'))
+def printV(V: 'list[float]') :
+    print(' '.join(["+{:.2f}".format(val) for val in V]).replace('+-', '-'))
 
 
 def stateQToString(Q: 'list[list[float]]', state: int) -> str :
@@ -49,5 +49,8 @@ def stateQToString(Q: 'list[list[float]]', state: int) -> str :
     return idxToAction(actionIdx)
 
 
-def printActions(Q: 'list[list[float]]'):
+def printActionsFromQ(Q: 'list[list[float]]'):
     print(' '.join([stateQToString(Q, x) for x in range(len(Q))]))
+
+def printActionsFromPolicy(policy: 'list[str]'):
+    print(' '.join(policy))

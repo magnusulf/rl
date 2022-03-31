@@ -1,5 +1,6 @@
 import numpy as np
 from typing import Any, Callable, Generic, TypeVar
+import RLCore
 
 S = TypeVar('S')
 A = TypeVar('A')
@@ -28,3 +29,9 @@ class mdp(Generic[S, A]):
 
 def getRewardMatrix(mdp: mdp) -> 'list[list[float]]':
     return [[mdp.reward(s, a) for a in mdp.actions] for s in mdp.states]
+
+#  Calculates a matrix that stores the transition probabilities
+# We store it so it needs not be calculated often
+def getTransitionMatrix(mdp: mdp) -> 'list[list[list[float]]]':
+    transitionF = RLCore.baseTransitionFunctionToNormalTransitionFunction(mdp.baseTransition)
+    return [[[transitionF(s1, a, s2) for s2 in mdp.states] for a in mdp.actions] for s1 in mdp.states]
