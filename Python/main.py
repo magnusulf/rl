@@ -16,7 +16,7 @@ if __name__ == '__main__':
 
     
     gw = gridworld(8, 7, [(0,3), (1,3), (2,3), (3,3), (5,3), (6,3), (7,3)], {(7,0) : 1.0}, (0,6), 0.50)
-    rs = riverswim(8, 0.55, 0.05, 0.1, 1.0, 0.6)
+    rs = riverswim(4, 0.55, 0.05, 0.1, 1.0, 0.8)
     
     print("Value iteration")
     #Q = ValueIteration.valueIteration(gw)
@@ -26,6 +26,17 @@ if __name__ == '__main__':
     #GridWorld.printActionsFromQ(gw, Q)
     RiverSwim.printV(V1)
     RiverSwim.printActionsFromQ(Q1)
+
+    print("UCB learning")
+    #policy = UCBL.policyEpsilonGreedy(rs, 0.1)
+    #Q2 = QLearning.qLearn(gw, policy, gw.starting_state)
+    Q2 = UCBLearning.ucbLearn(rs, 3, 0.1, 0.1)
+    V2 = RLCore.QtoV(Q2)
+    print(Q2)
+    #GridWorld.printV(gw, V2)
+    #GridWorld.printActionsFromQ(gw, Q2)
+    RiverSwim.printV(V2)
+    RiverSwim.printActionsFromQ(Q2)
 
     print("Q learning")
     policy = QLearning.policyEpsilonGreedy(rs, 0.1)

@@ -18,7 +18,7 @@ Policy = Callable[[List[List[float]], S], A]
         
 
 def ucbLearn(mdp: MDP.mdp[S, A], initialState: S, epsilon: float, delta: float) -> 'list[list[float]]' :
-    policy = QLearning.policyEpsilonGreedy(mdp, 0.00)
+    policy = QLearning.policyEpsilonGreedy(mdp, 0.1)
     rewardMatrix = MDP.getRewardMatrix(mdp)
     getActionStateValue = lambda s1, a, s2, Q: RLCore.getActionToStateValue(mdp.stateIdx, mdp.actionIdx, rewardMatrix, mdp.discount, s1, a, s2, Q)
     transitionF = RLCore.baseTransitionFunctionToStochasticTransitionFunction(mdp.baseTransition)
@@ -26,7 +26,7 @@ def ucbLearn(mdp: MDP.mdp[S, A], initialState: S, epsilon: float, delta: float) 
     maxQ = 1.0/(1.0-mdp.discount)
     Q = [[maxQ for _ in mdp.actions] for _ in mdp.states]
     Q_hat = [[maxQ for _ in mdp.actions] for _ in mdp.states]
-    c2 = np.sqrt(2) / 1000
+    c2 = 4* np.sqrt(2)/10
 
     epsilon2 = epsilon/3
     R = np.ceil(np.log(1/(epsilon2 * (1-mdp.discount)) / (1-mdp.discount)))
@@ -41,7 +41,7 @@ def ucbLearn(mdp: MDP.mdp[S, A], initialState: S, epsilon: float, delta: float) 
     N = [[0 for _ in mdp.actions] for _ in mdp.states]
     currentState = initialState
     accReward = 0.0
-    for i in range(1_000_000):
+    for i in range(5_000_000):
         action: A = policy(Q_hat, currentState)
         nextState = transitionF(currentState, action)
         reward = getActionStateValue(currentState, action, nextState, Q_hat)
@@ -56,5 +56,6 @@ def ucbLearn(mdp: MDP.mdp[S, A], initialState: S, epsilon: float, delta: float) 
         #if(i % 1000 == 0): print(bk)
         currentState = nextState
         accReward += transitionReward
+    print(N)
     print("Accumulated reward: %.1f" % accReward)
     return Q_hat
