@@ -43,4 +43,5 @@ def getActionToStateValue(stateIdx: ('Callable[[S], int]'), actionIdx: 'Callable
     nextStateValue: float = getStateValue(stateIdx, stateTo, Q)
     return transitionReward + discount * nextStateValue
 
-    
+def QtoV(Q: 'list[list[float]]') -> 'list[float]' :
+    return [max(line) for line in Q]

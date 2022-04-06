@@ -1,5 +1,5 @@
 import aifc
-from typing import cast
+from typing import Any, cast
 
 from matplotlib.pyplot import grid
 import MDP
@@ -37,7 +37,7 @@ class gridworld(MDP.mdp['tuple[int, int]', str]):
         if (a == 'right'):
             target = (s1[0]+1, s1[1])
         # prevent moving into walls
-        if (target in self.blocked_states or not self.insideBoundaries(target)):
+        if (target in self.blocked_states or not self.insideBoundaries(target) or s1 in self.blocked_states):
             target = s1
         
         return [(target, 1.0)]
@@ -48,9 +48,9 @@ class gridworld(MDP.mdp['tuple[int, int]', str]):
     def idxToAction(self, action: int) -> str :
         return self.actions[action]
 
-def printV (mdp: gridworld, Q):
+def printV (mdp: gridworld, V: 'list[float]'):
     for y in range(mdp.max_y-1, -1, -1):
-        print(' '.join(["+{:.2f}".format(RLCore.getStateValue(mdp.stateIdx, (x, y), Q)) for x in range(mdp.max_x)]).replace('+-', '-'))
+        print(' '.join(["+{:.2f}".format(V[mdp.stateIdx((x,y))]) for x in range(mdp.max_x)]).replace('+-', '-'))
 
 
 def stateQToString (mdp: gridworld, Q: 'list[list[float]]', state: 'tuple[int, int]') -> str :
@@ -64,7 +64,19 @@ def stateQToString (mdp: gridworld, Q: 'list[list[float]]', state: 'tuple[int, i
         aIdx: int = cast(int, np.argmax(actionValues))
         return mdp.idxToAction(aIdx)
 
+def statePolToString (mdp: gridworld, policy: 'list[str]', state: 'tuple[int, int]') -> str :
+    if (state in mdp.blocked_states):
+        return "-----"
+    elif (state in [x for x in mdp.absorption_states]):
+        return "Rward"
+    else:
+        return policy[mdp.stateIdx(state)]
 
-def printActions(mdp: gridworld, Q: 'list[list[float]]') :
+
+def printActionsFromQ(mdp: gridworld, Q: 'list[list[float]]') :
     for y in range(mdp.max_y-1, -1, -1):
         print(' '.join([stateQToString(mdp, Q, (x, y)) for x in range(mdp.max_x)]))
+
+def printActionsFromPolicy(mdp: gridworld, policy: 'list[str]') :
+    for y in range(mdp.max_y-1, -1, -1):
+        print(' '.join([statePolToString(mdp, policy, (x, y)) for x in range(mdp.max_x)]))

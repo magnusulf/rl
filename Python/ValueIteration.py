@@ -6,12 +6,6 @@ import MDP
 S = TypeVar('S')
 A = TypeVar('A')
 
-#  Calculates a matrix that stores the transition probabilities
-# We store it so it needs not be calculated often
-def getTransitionMatrix(mdp: MDP.mdp) -> 'list[list[list[float]]]':
-    transitionF = RLCore.baseTransitionFunctionToNormalTransitionFunction(mdp.baseTransition)
-    return [[[transitionF(s1, a, s2) for s2 in mdp.states] for a in mdp.actions] for s1 in mdp.states]
-
 # Given a starting state and an action it gives the discounted, expected value
 # Of performing the action
 def getActionValue(discount, mdp, stateFrom, action, P, R, Q):
@@ -22,11 +16,13 @@ def getActionValue(discount, mdp, stateFrom, action, P, R, Q):
 
 
 def valueIteration(mdp: MDP.mdp) -> 'list[list[float]]':
-    P = getTransitionMatrix(mdp)
+    P = MDP.getTransitionMatrix(mdp)
     R = MDP.getRewardMatrix(mdp)
     Q = [[0.0 for _ in mdp.actions] for _ in mdp.states]
-    changes = 1
+    changes: int = 1
+    iterations: int = 0
     while (changes != 0):
+        iterations += 1
         changes = 0
         for state in mdp.states:
             for action in mdp.actions:
@@ -35,5 +31,6 @@ def valueIteration(mdp: MDP.mdp) -> 'list[list[float]]':
                 if (newVal != oldVal):
                     changes = changes + 1
                 Q[mdp.stateIdx(state)][mdp.actionIdx(action)] = newVal
+    print("Iterations: " + str(iterations))
     return Q
     
