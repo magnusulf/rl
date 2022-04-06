@@ -18,12 +18,11 @@ class mdprm(Generic[S, A, U]):
     def baseTransition(self, s1: S, a: A) -> 'list[tuple[S, float]]':
         return []
 
-    def rewardTransition(self, u: U, labels: 'list[str]'):
-        ret: U
-        return ret 
+    def rewardTransition(self, u: U, labels: 'list[str]') -> U:
+        return None   # type: ignore
 
-    def labelingFunction(self, s1: S, a: A, s2: S):
-        return ""
+    def labelingFunction(self, s1: S, a: A, s2: S) -> 'list[str]':
+        return []
 
     def reward(self, u: U , s1: S, a: A, s2: S) -> float:
         return 0
@@ -34,9 +33,5 @@ class mdprm(Generic[S, A, U]):
     def actionIdx(self, a: A) -> int:
         return self.actions.index(a)
     
-    def rewardIdx(self, u: U) -> int:
+    def rewardStateIdx(self, u: U) -> int:
         return self.reward_states.index(u)
-
-
-def getRewardMatrix(mdp: mdp) -> 'list[list[float]]':
-    return [[mdp.reward(s, a) for a in mdp.actions] for s in mdp.states]
