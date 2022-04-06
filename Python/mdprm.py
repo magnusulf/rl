@@ -34,8 +34,8 @@ class mdprm(Generic[S, A, U]):
     def actionIdx(self, a: A) -> int:
         return self.actions.index(a)
     
-    def rewardIdx(self, a: A) -> int:
-        return self.reward_states.index(a)
+    def rewardIdx(self, u: U) -> int:
+        return self.reward_states.index(u)
 
 
 def getRewardMatrix(mdp: mdp) -> 'list[list[float]]':
