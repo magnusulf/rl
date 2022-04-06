@@ -1,7 +1,7 @@
-import mdprm
+import mdprm 
 
-class officeworld(mdprm['tuple[int, int]', str, str]):
-    def __init__(self, max_x: int, max_y: int, blocked: 'list[tuple[int, int]]', offices: 'list[tuple[int, int]]', coffee: 'list[tuple[int, int]]', start: 'tuple[int, int]', discount: float):
+class officeworld(mdprm.mdprm['tuple[int, int]', str, str]):
+    def __init__(self, max_x: int, max_y: int, blocked: 'list[tuple[int, int]]', offices: 'list[tuple[int, int]]', coffee: 'list[tuple[int, int]]', discount: float):
         self.max_x = max_x
         self.max_y = max_y
         states = [(x,y) for x in range(max_x) for y in range(max_y)]
@@ -10,34 +10,32 @@ class officeworld(mdprm['tuple[int, int]', str, str]):
         self.blocked_states: 'list[tuple[int, int]]' = blocked
         self.office_states: 'list[tuple[int, int]]' = offices
         self.coffee_states: 'list[tuple[int, int]]' = coffee
-        self.starting_state = start
+        self.absorption_states = []
         mdprm.mdprm.__init__(self, states, actions, reward_states, discount)
 
-    def reward(self, u: str, s1: 'tuple[int, int]', a: str, s2: 'tuple[int, int]'):
+    def reward(self, u: str, s1: 'tuple[int, int]', a: str, s2: 'tuple[int, int]') -> float:
         if (u == 'coffee' and s2 in self.office_states):
             return 1
         return 0
 
-    def rewardTransition(self, u: str, labels: 'list[str]'):
+    def rewardTransition(self, u: str, labels: 'list[str]') -> str:
         if (u == 'start' and 'coffee' in labels):
             return 'coffee'
         if (u == 'coffee' and 'office' in labels):
             return 'terminal'
         return u
 
-    def labelingFunction(self, s1: 'tuple[int, int]', a: str, s2: 'tuple[int, int]'):
+    def labelingFunction(self, s1: 'tuple[int, int]', a: str, s2: 'tuple[int, int]') -> 'list[str]':
         ret = []
         if (s2 in self.office_states): ret.append("office")
         if (s2 in self.coffee_states): ret.append("coffee")
         return ret
 
-    def isTerminal(u: str):
+    def isTerminal(self, u: str):
         return u == 'terminal'
 
     def baseTransition(self, s1: 'tuple[int, int]', a: str) -> 'list[tuple[tuple[int, int], float]]':
         # if absorption state
-        if (s1 in self.absorption_states):
-            return [(self.starting_state, 1.0)]
         target: 'tuple[int, int]' = (0,0)
         # else try to move
         if (a == 'up   '):
@@ -59,3 +57,4 @@ class officeworld(mdprm['tuple[int, int]', str, str]):
 
     def idxToAction(self, action: int) -> str :
         return self.actions[action]
+        

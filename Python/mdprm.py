@@ -35,3 +35,6 @@ class mdprm(Generic[S, A, U]):
     
     def rewardStateIdx(self, u: U) -> int:
         return self.reward_states.index(u)
+
+    def isTerminal(self, u: U) -> bool:
+        return False

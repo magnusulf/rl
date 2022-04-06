@@ -4,7 +4,7 @@ import MDP
 import RLCore
 import random as rnd
 import numpy as np
-import QLearning
+from training import QLearning
 import math
 
 S = TypeVar('S')
@@ -41,7 +41,7 @@ def ucbLearn(mdp: MDP.mdp[S, A], initialState: S, epsilon: float, delta: float) 
     N = [[0 for _ in mdp.actions] for _ in mdp.states]
     currentState = initialState
     accReward = 0.0
-    for i in range(5_000_000):
+    for i in range(1_000_000):
         action: A = policy(Q_hat, currentState)
         nextState = transitionF(currentState, action)
         reward = getActionStateValue(currentState, action, nextState, Q_hat)
