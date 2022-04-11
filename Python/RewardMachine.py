@@ -1,15 +1,13 @@
 from environments.OfficeWorld import officeworld
-from training.QLearningCPB import qLearn
-from training.QLearningCPB import policyEpsilonGreedy
+from training.QLearningCRM import policyEpsilonGreedy, policyRandom, qLearn
 from environments import GridWorld
 import RLCore
 import numpy as np
 
 if __name__ == '__main__':
 
-    of = officeworld(3, 3, [], [(2,2)], [(0,2)], 0.9)
-    Q = qLearn(of, policyEpsilonGreedy(of, 0.1), (0,0), 'start')
-    print(Q)
+    of = officeworld(5, 5, [(1,1)], [(4,4)], [(1,3)], 0.9)
+    Q = qLearn(of, policyRandom(of.actions), (0,0), 'start')
     Q = np.array(Q)
     Qstart = Q[:,1,:]
     Vstart = RLCore.QtoV(Qstart.tolist())  # type: ignore

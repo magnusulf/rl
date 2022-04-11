@@ -13,17 +13,17 @@ class officeworld(mdprm.mdprm['tuple[int, int]', str, str]):
         self.absorption_states = []
         mdprm.mdprm.__init__(self, states, actions, reward_states, discount)
 
-    def reward(self, u: str, s1: 'tuple[int, int]', a: str, s2: 'tuple[int, int]') -> float:
-        if (u == 'coffee' and s2 in self.office_states):
-            return 1
-        return 0
+    # def reward(self, u: str, s1: 'tuple[int, int]', a: str, s2: 'tuple[int, int]') -> float:
+    #     if (u == 'coffee' and s2 in self.office_states):
+    #         return 1
+    #     return 0
 
-    def rewardTransition(self, u: str, labels: 'list[str]') -> str:
+    def rewardTransition(self, u: str, labels: 'list[str]') -> 'tuple[str, float]':
         if (u == 'start' and 'coffee' in labels):
-            return 'coffee'
+            return 'coffee', 0
         if (u == 'coffee' and 'office' in labels):
-            return 'terminal'
-        return u
+            return 'terminal', 1
+        return u, 0
 
     def labelingFunction(self, s1: 'tuple[int, int]', a: str, s2: 'tuple[int, int]') -> 'list[str]':
         ret = []

@@ -18,14 +18,14 @@ class mdprm(Generic[S, A, U]):
     def baseTransition(self, s1: S, a: A) -> 'list[tuple[S, float]]':
         return []
 
-    def rewardTransition(self, u: U, labels: 'list[str]') -> U:
+    def rewardTransition(self, u: U, labels: 'list[str]') -> 'tuple[U, float]':
         return None   # type: ignore
 
     def labelingFunction(self, s1: S, a: A, s2: S) -> 'list[str]':
         return []
 
-    def reward(self, u: U , s1: S, a: A, s2: S) -> float:
-        return 0
+    # def reward(self, u: U , s1: S, a: A, s2: S) -> float:
+    #     return 0
 
     def stateIdx(self, s: S) -> int:
         return self.states.index(s)

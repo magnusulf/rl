@@ -37,31 +37,40 @@ def qLearn(mdprm: mdprm.mdprm[S, A, U], policy: Policy[S, U, A], s0: S, u0: U) -
     s: S = s0
     u: U = u0
 
-    for i in range(1_000_000):
+    for i in range(1000000):
         if (mdprm.isTerminal(u)):
             s = s0
             u = u0
 
         a: A = policy(Q, s, u)
         nextS: S = transitionF(s, a)
-        nextU: U = mdprm.rewardTransition(u, mdprm.labelingFunction(s, a, nextS))
+        nextU, transitionReward = mdprm.rewardTransition(u, mdprm.labelingFunction(s, a, nextS))
+
+        # print("\nIteration: " + str(i))
+        # print(s)
+        # print(u)
+        # print(a)
+        # print(nextS)
+        # print(nextU)
 
         visitCount[mdprm.stateIdx(s)][mdprm.actionIdx(a)] = visitCount[mdprm.stateIdx(s)][mdprm.actionIdx(a)] + 1
         k = 10.0
         learningRate: float = k /(k + (visitCount[mdprm.stateIdx(s)][mdprm.actionIdx(a)]))
-
+        # print("CRM")
         for u_overline in mdprm.reward_states:
             if (mdprm.isTerminal(u_overline)):
                 continue
-            r_overline: float = mdprm.reward(u_overline, s, a, nextS)
-            nextU_overline: U = mdprm.rewardTransition(u_overline, mdprm.labelingFunction(s, a, nextS))
-            newValue = 0
+            nextU_overline, r_overline = mdprm.rewardTransition(u_overline, mdprm.labelingFunction(s, a, nextS))
             if (mdprm.isTerminal(nextU_overline)):
-                newValue = r_overline
+                newValueTerminal = r_overline
+                newValueActual = mdprm.discount * r_overline
+                if (s != nextS):
+                    Q[mdprm.stateIdx(s)][mdprm.rewardStateIdx(u_overline)][mdprm.actionIdx(a)] = learningRate * newValueActual + (1.0-learningRate) * Q[mdprm.stateIdx(s)][mdprm.rewardStateIdx(u_overline)][mdprm.actionIdx(a)]
+                for a1 in mdprm.actions:
+                    Q[mdprm.stateIdx(nextS)][mdprm.rewardStateIdx(u_overline)][mdprm.actionIdx(a1)] = learningRate * newValueTerminal + (1.0-learningRate) * Q[mdprm.stateIdx(nextS)][mdprm.rewardStateIdx(u_overline)][mdprm.actionIdx(a1)]
             else:
-                newValue = r_overline + mdprm.discount * max(Q[mdprm.stateIdx(s)][mdprm.rewardStateIdx(u_overline)])
-            Q[mdprm.stateIdx(s)][mdprm.rewardStateIdx(u_overline)][mdprm.actionIdx(a)] = learningRate * newValue + (1-learningRate) * Q[mdprm.stateIdx(s)][mdprm.rewardStateIdx(u_overline)][mdprm.actionIdx(a)]
-        transitionReward = mdprm.reward(u, s, a, nextS)
+                newValue = r_overline + mdprm.discount * max(Q[mdprm.stateIdx(nextS)][mdprm.rewardStateIdx(nextU_overline)])
+                Q[mdprm.stateIdx(s)][mdprm.rewardStateIdx(u_overline)][mdprm.actionIdx(a)] = learningRate * newValue + (1.0-learningRate) * Q[mdprm.stateIdx(s)][mdprm.rewardStateIdx(u_overline)][mdprm.actionIdx(a)]
         accReward += transitionReward
         s = nextS
         u = nextU
