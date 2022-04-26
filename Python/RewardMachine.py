@@ -6,8 +6,8 @@ import numpy as np
 
 if __name__ == '__main__':
 
-    of = officeworld(5, 5, [(1,1)], [(4,4)], [(1,3)], 0.89)
-    Q = QLearningCRM.qLearn(of, QLearningCRM.policyEpsilonGreedy(of, 0.1), (0,0), 'start')
+    of = officeworld(5, 5, [(1,1)], [(4,4)], [(1,3)], [(2,2)], 0.1, 0.89)
+    Q = QLearningCRM.qLearn(of, QLearningCRM.policyRandom(of.actions), (0,0), 'start')
     Q = np.array(Q)
 
     Qstart = Q[:,0,:]
