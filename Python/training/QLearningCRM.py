@@ -37,7 +37,7 @@ def qLearn(mdprm: mdprm.mdprm[S, A, U], policy: Policy[S, U, A], s0: S, u0: U) -
     s: S = s0
     u: U = u0
 
-    for i in range(1000000):
+    for i in range(1_000_000):
         if (mdprm.isTerminal(u)):
             s = s0
             u = u0
