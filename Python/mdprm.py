@@ -1,6 +1,7 @@
 import numpy as np
 from typing import Any, Callable, Generic, TypeVar
 
+
 S = TypeVar('S')
 A = TypeVar('A')
 U = TypeVar('U')

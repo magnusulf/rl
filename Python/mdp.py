@@ -20,6 +20,9 @@ class mdp(Generic[S, A]):
     def reward(self, s: S, a: A) -> float:
         return 0
 
+    def isTerminal(self, s: S) -> bool:
+        return False
+
     def stateIdx(self, s: S) -> int:
         return self.states.index(s)
 

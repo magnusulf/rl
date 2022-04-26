@@ -37,7 +37,7 @@ def qLearn(mdprm: mdprm.mdprm[S, A, U], policy: Policy[S, U, A], s0: S, u0: U) -
     s: S = s0
     u: U = u0
 
-    for i in range(1_000_000):
+    for _ in range(100_000):
         if (mdprm.isTerminal(u)):
             s = s0
             u = u0
@@ -46,14 +46,7 @@ def qLearn(mdprm: mdprm.mdprm[S, A, U], policy: Policy[S, U, A], s0: S, u0: U) -
         nextS: S = transitionF(s, a)
         nextU, transitionReward = mdprm.rewardTransition(u, mdprm.labelingFunction(s, a, nextS))
 
-        # print("\nIteration: " + str(i))
-        # print(s)
-        # print(u)
-        # print(a)
-        # print(nextS)
-        # print(nextU)
-
-        visitCount[mdprm.stateIdx(s)][mdprm.actionIdx(a)] = visitCount[mdprm.stateIdx(s)][mdprm.actionIdx(a)] + 1
+        visitCount[mdprm.stateIdx(s)][mdprm.actionIdx(a)] += 1
         k = 10.0
         learningRate: float = k /(k + (visitCount[mdprm.stateIdx(s)][mdprm.actionIdx(a)]))
         # print("CRM")
@@ -64,9 +57,12 @@ def qLearn(mdprm: mdprm.mdprm[S, A, U], policy: Policy[S, U, A], s0: S, u0: U) -
             if (mdprm.isTerminal(nextU_overline)):
                 newValueTerminal = r_overline
                 newValueActual = mdprm.discount * r_overline
-                if (s != nextS):
+                # We do this so it looks pretty so that the terminal state will have the value 1 and the one before will have the value
+                # 1 * discount, if we do it exactly as it is done in the paper the reward is given at the transition to the terminal state
+                # and thus the final result looks a bit odd
+                if (s != nextS): # Setting the value for the state that we are in prior to the terminal state
                     Q[mdprm.stateIdx(s)][mdprm.rewardStateIdx(u_overline)][mdprm.actionIdx(a)] = learningRate * newValueActual + (1.0-learningRate) * Q[mdprm.stateIdx(s)][mdprm.rewardStateIdx(u_overline)][mdprm.actionIdx(a)]
-                for a1 in mdprm.actions:
+                for a1 in mdprm.actions: # Setting the value for the actual terminal state
                     Q[mdprm.stateIdx(nextS)][mdprm.rewardStateIdx(u_overline)][mdprm.actionIdx(a1)] = learningRate * newValueTerminal + (1.0-learningRate) * Q[mdprm.stateIdx(nextS)][mdprm.rewardStateIdx(u_overline)][mdprm.actionIdx(a1)]
             else:
                 newValue = r_overline + mdprm.discount * max(Q[mdprm.stateIdx(nextS)][mdprm.rewardStateIdx(nextU_overline)])

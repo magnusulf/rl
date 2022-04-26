@@ -16,6 +16,7 @@ def getRandomElementWeightedSub (lst: 'list[S]', weigths: 'list[float]', r: floa
         return lst[0]
 
 def getRandomElementWeighted (lst: 'list[S]', weigths: 'list[float]') -> S :
+    assert len(lst) != 0 and len(weigths) != 0
     return getRandomElementWeightedSub(lst, weigths, rnd.random() * sum(weigths))
 
 def baseTransitionFunctionToNormalTransitionFunction(base: 'Callable[[S, A], list[tuple[S, float]]]') -> 'Callable[[S, A, S], float]':
