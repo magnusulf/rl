@@ -27,7 +27,7 @@ def policyEpsilonGreedy(mdp: mdprm.mdprm[S, A, U], epsilon: float) -> 'Callable[
     return pol
         
 
-def qLearn(mdprm: mdprm.mdprm[S, A, U], policy: Policy[S, U, A], s0: S, u0: U) -> 'list[list[list[float]]]' :
+def qLearn(mdprm: mdprm.mdprm[S, A, U], policy: Policy[S, U, A], s0: S, u0: U, iterations: int) -> 'list[list[list[float]]]' :
     transitionF = RLCore.baseTransitionFunctionToStochasticTransitionFunction(mdprm.baseTransition)
     maxQ: float = 1.0/(1.0-mdprm.discount)
     Q = [[[maxQ for _ in mdprm.actions] for _ in mdprm.reward_states] for _ in mdprm.states]
@@ -37,7 +37,7 @@ def qLearn(mdprm: mdprm.mdprm[S, A, U], policy: Policy[S, U, A], s0: S, u0: U) -
     s: S = s0
     u: U = u0
 
-    for _ in range(100_000):
+    for _ in range(iterations):
         if (mdprm.isTerminal(u)):
             s = s0
             u = u0
@@ -47,7 +47,7 @@ def qLearn(mdprm: mdprm.mdprm[S, A, U], policy: Policy[S, U, A], s0: S, u0: U) -
         nextU, transitionReward = mdprm.rewardTransition(u, mdprm.labelingFunction(s, a, nextS))
 
         visitCount[mdprm.stateIdx(s)][mdprm.actionIdx(a)] += 1
-        k = 10.0
+        k = 20.0
         learningRate: float = k /(k + (visitCount[mdprm.stateIdx(s)][mdprm.actionIdx(a)]))
         # print("CRM")
         for u_overline in mdprm.reward_states:
@@ -57,11 +57,19 @@ def qLearn(mdprm: mdprm.mdprm[S, A, U], policy: Policy[S, U, A], s0: S, u0: U) -
             if (mdprm.isTerminal(nextU_overline)):
                 newValueTerminal = r_overline
                 newValueActual = mdprm.discount * r_overline
+                # if ('decoration' in mdprm.labelingFunction(s, a, nextS)):
+                #     print("terminal:" + str(newValueTerminal))
+                #     print("actual  :" + str(newValueActual))
+                #     print(s)
+                #     print(nextS)
                 # We do this so it looks pretty so that the terminal state will have the value 1 and the one before will have the value
                 # 1 * discount, if we do it exactly as it is done in the paper the reward is given at the transition to the terminal state
                 # and thus the final result looks a bit odd
                 if (s != nextS): # Setting the value for the state that we are in prior to the terminal state
+                    #print("learnr: " + str(learningRate))
+                    #print("before: " + str(Q[mdprm.stateIdx(s)][mdprm.rewardStateIdx(u_overline)][mdprm.actionIdx(a)]))
                     Q[mdprm.stateIdx(s)][mdprm.rewardStateIdx(u_overline)][mdprm.actionIdx(a)] = learningRate * newValueActual + (1.0-learningRate) * Q[mdprm.stateIdx(s)][mdprm.rewardStateIdx(u_overline)][mdprm.actionIdx(a)]
+                    #print("after : " + str(Q[mdprm.stateIdx(s)][mdprm.rewardStateIdx(u_overline)][mdprm.actionIdx(a)]))
                 for a1 in mdprm.actions: # Setting the value for the actual terminal state
                     Q[mdprm.stateIdx(nextS)][mdprm.rewardStateIdx(u_overline)][mdprm.actionIdx(a1)] = learningRate * newValueTerminal + (1.0-learningRate) * Q[mdprm.stateIdx(nextS)][mdprm.rewardStateIdx(u_overline)][mdprm.actionIdx(a1)]
             else:

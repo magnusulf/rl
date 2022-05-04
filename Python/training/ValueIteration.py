@@ -25,6 +25,8 @@ def valueIteration(mdp: MDP.mdp) -> 'list[list[float]]':
         iterations += 1
         changes = 0
         for state in mdp.states:
+            if (mdp.isTerminal(state)):
+                continue
             for action in mdp.actions:
                 newVal = getActionValue(mdp.discount, mdp, state, action, P, R, Q)
                 oldVal = Q[mdp.stateIdx(state)][mdp.actionIdx(action)]

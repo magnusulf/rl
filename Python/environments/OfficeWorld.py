@@ -1,4 +1,7 @@
+from environments import GridWorld
+import RLCore
 import mdprm 
+import numpy as np
 
 class officeworld(mdprm.mdprm['tuple[int, int]', str, str]):
     def __init__(self, max_x: int, max_y: int, blocked: 'list[tuple[int, int]]', 
@@ -14,7 +17,7 @@ class officeworld(mdprm.mdprm['tuple[int, int]', str, str]):
         self.office_states: 'list[tuple[int, int]]' = offices
         self.coffee_states: 'list[tuple[int, int]]' = coffee
         self.decoration_states: 'list[tuple[int, int]]' = decorations
-        self.absorption_states = []
+        self.absorption_states = offices + decorations # Only used for printing via GridWorld functions
         mdprm.mdprm.__init__(self, states, actions, reward_states, discount)
 
     # def reward(self, u: str, s1: 'tuple[int, int]', a: str, s2: 'tuple[int, int]') -> float:
@@ -35,7 +38,7 @@ class officeworld(mdprm.mdprm['tuple[int, int]', str, str]):
         ret = []
         if (s2 in self.decoration_states): ret.append("decoration")
         if (s2 in self.office_states): ret.append("office")
-        if (s2 in self.coffee_states): ret.append("coffee")
+        if (s2 in self.coffee_states or s1 in self.coffee_states): ret.append("coffee")
         return ret
 
     def isTerminal(self, u: str):
@@ -43,7 +46,7 @@ class officeworld(mdprm.mdprm['tuple[int, int]', str, str]):
 
     def baseTransition(self, s1: 'tuple[int, int]', a: str) -> 'list[tuple[tuple[int, int], float]]':
         # if absorption state
-        targets: 'list[tuple[int, int], float]' = [((0,0), 1.0)]
+        targets: 'list[tuple[tuple[int, int], float]]' = [((0,0), 1.0)]
         # else try to move
         if (a == 'up   '):
             targets = [
@@ -76,4 +79,24 @@ class officeworld(mdprm.mdprm['tuple[int, int]', str, str]):
 
     def idxToAction(self, action: int) -> str :
         return self.actions[action]
-        
+
+def printVs(of: officeworld, Q):
+    Qarr = np.array(Q)
+    for i in range(len(of.reward_states)):
+        if (of.isTerminal(of.reward_states[i])):
+            continue
+        print()
+        print(of.reward_states[i])
+        Qstate = Qarr[:,i,:]
+        V = RLCore.QtoV(Qstate) # type: ignore
+        GridWorld.printV(of, V) # type: ignore
+
+def printActions(of: officeworld, Q):
+    Qarr = np.array(Q)
+    for i in range(len(of.reward_states)):
+        if (of.isTerminal(of.reward_states[i])):
+            continue
+        print()
+        print(of.reward_states[i])
+        Qstate = Qarr[:,i,:]
+        GridWorld.printActionsFromQ(of, Qstate) # type: ignore

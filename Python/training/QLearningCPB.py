@@ -10,7 +10,7 @@ U = TypeVar('U')
 
 Policy = Callable[[List[List[List[float]]], S, U], A]
 
-def qLearn(mdprm: mdprm.mdprm[S, A, U], policy: Policy[S, U, A], s0: S, u0: U) -> 'list[list[list[float]]]' :
+def qLearn(mdprm: mdprm.mdprm[S, A, U], policy: Policy[S, U, A], s0: S, u0: U, iterations) -> 'list[list[list[float]]]' :
     transitionF = RLCore.baseTransitionFunctionToStochasticTransitionFunction(mdprm.baseTransition)
     maxQ: float = 1.0/(1.0-mdprm.discount)
     Q = [[[maxQ for _ in mdprm.actions] for _ in mdprm.reward_states] for _ in mdprm.states]
@@ -20,7 +20,7 @@ def qLearn(mdprm: mdprm.mdprm[S, A, U], policy: Policy[S, U, A], s0: S, u0: U) -
     s: S = s0
     u: U = u0
 
-    for _ in range(100_000):
+    for _ in range(iterations):
         if (mdprm.isTerminal(u)):
             s = s0
             u = u0

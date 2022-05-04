@@ -8,7 +8,7 @@ if __name__ == '__main__':
     #let livingReward = 0.0
 
     
-    gw = GridWorld.gridworld(8, 7, [(0,3), (1,3), (2,3), (3,3), (5,3), (6,3), (7,3)], {(7,0) : 1.0}, (0,6), 0.50)
+    gw = GridWorld.gridworld(8, 7, [(0,3), (1,3), (2,3), (3,3), (5,3), (6,3), (7,3)], {(7,0) : 1.0}, (0,6), 0.1, 0.50)
     rs = RiverSwim.riverswim(4, 0.55, 0.05, 0.1, 1.0, 0.8)
     
     print("Value iteration")
