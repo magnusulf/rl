@@ -24,12 +24,17 @@ class gridworld(MDP.mdp['tuple[int, int]', str]):
         return 0
 
     def isTerminal(self, s: 'tuple[int, int]') -> bool:
-        return s == (-1,-1)
+        # blocked states are deemed as terminal so that Q learning
+        # knows that their values are uninteresting
+        return s == (-1,-1) or s in self.blocked_states
 
     def baseTransition(self, s1: 'tuple[int, int]', a: str) -> 'list[tuple[tuple[int, int], float]]':
         # if absorption state
         if (s1 in self.absorption_states):
             return [((-1,-1), 1.0)]
+
+        if (s1 in self.blocked_states):
+            return [(s1, 1)]
         
         targets: 'list[tuple[tuple[int, int], float]]' = [((0,0), 1.0)]
         # else try to move
