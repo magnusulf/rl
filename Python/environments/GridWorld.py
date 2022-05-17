@@ -79,7 +79,7 @@ def stateQToString (mdp: gridworld, Q: 'list[list[float]]', state: 'tuple[int, i
     if (state in mdp.blocked_states):
         return "-----"
     elif (state in [x for x in mdp.absorption_states]):
-        return "Trmnl"
+        return "trmnl"
     else:
         idx = mdp.stateIdx(state)
         actionValues = Q[idx]
@@ -90,7 +90,7 @@ def statePolToString (mdp: gridworld, policy: 'list[str]', state: 'tuple[int, in
     if (state in mdp.blocked_states):
         return "-----"
     elif (state in [x for x in mdp.absorption_states]):
-        return "Trmnl"
+        return "trmnl"
     else:
         return policy[mdp.stateIdx(state)]
 

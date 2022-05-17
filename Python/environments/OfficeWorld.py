@@ -36,17 +36,24 @@ class officeworld(mdprm.mdprm['tuple[int, int]', str, str]):
 
     def labelingFunction(self, s1: 'tuple[int, int]', a: str, s2: 'tuple[int, int]') -> 'list[str]':
         ret = []
-        if (s2 in self.decoration_states): ret.append("decoration")
-        if (s2 in self.office_states): ret.append("office")
-        if (s2 in self.coffee_states or s1 in self.coffee_states): ret.append("coffee")
+        if (s1 in self.decoration_states): ret.append("decoration")
+        if (s1 in self.office_states): ret.append("office")
+        if (s1 in self.coffee_states): ret.append("coffee")
         return ret
 
     def isTerminal(self, u: str):
         return u == 'terminal'
 
+    def isBlocked(self, s: 'tuple[int, int]'):
+        return s in self.blocked_states
+
     def baseTransition(self, s1: 'tuple[int, int]', a: str) -> 'list[tuple[tuple[int, int], float]]':
         # if absorption state
         targets: 'list[tuple[tuple[int, int], float]]' = [((0,0), 1.0)]
+
+        if (s1 in self.blocked_states):
+            return [(s1, 1)]
+
         # else try to move
         if (a == 'up   '):
             targets = [
@@ -100,3 +107,4 @@ def printActions(of: officeworld, Q):
         print(of.reward_states[i])
         Qstate = Qarr[:,i,:]
         GridWorld.printActionsFromQ(of, Qstate) # type: ignore
+
