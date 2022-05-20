@@ -122,13 +122,13 @@ def policyEpsilonGreedy(mdp: MDP.mdp[S, A], epsilon: float) -> 'Callable[[list[l
         if (rand < epsilon): # Random when less than epsilon
             return mdp.actions[rnd.randint(0, len(mdp.actions)-1)]
         else:
-            Qvalues = policy_net(torch.tensor([mdp.stateIdx(s)], device=device)).detach().numpy()
-            idx = np.argmax(Qvalues)
+            Qvalues = policy_net(torch.tensor([mdp.stateIdx(s)], device=device)).detach()
+            idx = np.argmax(Qvalues.cpu().numpy())
             return mdp.actions[idx]
     return pol
         
 
-def dqLearn(mdp: MDP.mdp[S, A], policy: Policy[S, A], initialState: S) -> 'list[list[float]]' :
+def dqLearn(mdp: MDP.mdp[S, A], policy: Policy[S, A], initialState: S, iterations: int) -> 'list[list[float]]' :
     R = MDP.getRewardMatrix(mdp)
     getActionStateValue = lambda s1, a, s2, Q: RLCore.getActionToStateValue(mdp.stateIdx, mdp.actionIdx, R, mdp.discount, s1, a, s2, Q)
     transitionF = RLCore.baseTransitionFunctionToStochasticTransitionFunction(mdp.baseTransition)
@@ -138,7 +138,10 @@ def dqLearn(mdp: MDP.mdp[S, A], policy: Policy[S, A], initialState: S) -> 'list[
     visitCount = [[0 for _ in mdp.actions] for _ in mdp.states]
     currentState = initialState
     accReward = 0.0
-    for i in range(100):
+    for i in range(iterations):
+        if (mdp.isTerminal(currentState)):
+            currentState = initialState
+
         action = policy(Qnet.policy_net, currentState, DQNCore.device)
         nextState = transitionF(currentState, action)
         transitionReward = R[mdp.stateIdx(currentState)][mdp.actionIdx(action)]
@@ -157,7 +160,7 @@ def dqLearn(mdp: MDP.mdp[S, A], policy: Policy[S, A], initialState: S) -> 'list[
         if (i % 10 == 0):
             Qnet.update_target_network()
         if (i % 100 == 0):
-            print(i)
+            print(currentState)
     print("Accumulated reward: %.1f" % accReward)
     stateIdxs = [mdp.stateIdx(s) for s in mdp.states]
-    return Qnet.policy_net(torch.tensor([stateIdxs], device=DQNCore.device))[0].detach().numpy()
+    return Qnet.policy_net(torch.tensor([stateIdxs], device=DQNCore.device))[0].detach().cpu().numpy()

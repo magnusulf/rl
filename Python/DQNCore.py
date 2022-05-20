@@ -23,6 +23,8 @@ class QNetwork(nn.Module):
             nn.ReLU(),
             nn.Linear(50, 50),
             nn.ReLU(),
+            nn.Linear(50, 50),
+            nn.ReLU(),
             nn.Linear(50, num_actions),
         )
 
@@ -31,7 +33,7 @@ class QNetwork(nn.Module):
         x = self.linear_relu_stack(x)
         return x
 
-device = torch.device("cpu")
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 Transition = namedtuple('Transition', ('state', 'action', 'next_state', 'reward'))
 
