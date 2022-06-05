@@ -43,12 +43,14 @@ def qLearn(mdprm: mdprm.mdprm[S, A, U], policy: Policy[S, U, A], initialS: 'list
     plot_diffs = []
     plot_iter = []
     cover_time = None
+    argmax_Q = np.argmax(np.array(realQ), axis=2)
 
     for u in mdprm.reward_states:
         for s in mdprm.states:
             for a in mdprm.actions:
                 if (mdprm.isTerminal(u) or mdprm.isBlocked(s)):
                     Q[mdprm.stateIdx(s)][mdprm.rewardStateIdx(u)][mdprm.actionIdx(a)] = 0
+                    argmax_Q[mdprm.stateIdx(s)][mdprm.rewardStateIdx(u)] = 0
                 if (mdprm.isBlocked(s)):
                     visitCount[mdprm.stateIdx(s)][mdprm.actionIdx(a)] = 1
 
@@ -80,8 +82,18 @@ def qLearn(mdprm: mdprm.mdprm[S, A, U], policy: Policy[S, U, A], initialS: 'list
         s = nextS
         u = nextU
 
-        if (i % 100 == 0):
-            diff = np.max(np.abs(np.subtract(np.array(Q), np.array(realQ))))
+        if (i % 10_000 == 0):
+            diff = 0
+            for u in mdprm.reward_states:
+                for s in mdprm.states:
+                    if (mdprm.isTerminal(u) or mdprm.isBlocked(s)):
+                        continue
+                    policy_action = np.argmax(Q[mdprm.stateIdx(s)][mdprm.rewardStateIdx(u)])
+                    policy_val = realQ[mdprm.stateIdx(s)][mdprm.rewardStateIdx(u)][policy_action]
+                    optimal_val = np.max(realQ[mdprm.stateIdx(s)][mdprm.rewardStateIdx(u)])
+                    if (abs(policy_val - optimal_val) > 0.01):
+                        diff += 1
+            #diff = np.max(np.abs(np.subtract(np.array(Q), np.array(realQ))))
             plot_diffs.append(diff)
             plot_iter.append(i)
     

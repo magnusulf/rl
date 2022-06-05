@@ -256,3 +256,23 @@ paket-files/
 
 # Coverage Report
 MyProject_coverage.xml
+qlearn avg (n= 21).png
+qlearn avg (n= 201).png
+qlearn avg n=251.png
+qlearn CPB avg (n= 21).png
+qlearn CPB avg (n= 101).png
+qlearn CPB avg (n= 201).png
+qlearn CPB avg.png
+qlearn CPB policy # (n= 5).png
+qlearn CPB policy # (n= 21).png
+qlearn CPB policy # (n= 51).png
+qlearn CRM avg (n= 21).png
+qlearn CRM avg (n= 101).png
+qlearn CRM avg (n= 201).png
+qlearn crm avg n=251.png
+qlearn CRM policy # (n= 5).png
+qlearn CRM policy # (n= 21).png
+qlearn CRM policy # (n= 51).png
+qlearn policy # (n= 5).png
+qlearn policy # (n= 21).png
+qlearn policy # (n= 51).png

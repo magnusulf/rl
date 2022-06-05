@@ -1,3 +1,4 @@
+
 from training import QLearningCRM, QLearningCPB, ValueIteration, ValueIterationRM
 from environments import GridWorld, OfficeWorld
 import RLCore
@@ -8,7 +9,7 @@ import math
 
 
 
-def qLearnMany(mdprm, policy, initialS, initialU, iterations, realQ, iter2):
+def qLearnMany(mdprm: OfficeWorld.officeworld, policy, initialS, initialU, iterations, realQ, iter2):
     crm_Qs = [] 
     crm_plot_diffss = []
     plot_iters = []
@@ -24,6 +25,7 @@ def qLearnMany(mdprm, policy, initialS, initialU, iterations, realQ, iter2):
         plot_iters = plot_iter
         crm_cover_times.append(cover_time)
         crm_diffs.append(diff)
+        print('CRM ' + str(j))
 
     crm_plot_diffs = np.mean(np.array(crm_plot_diffss), axis=0)
     crm_plot_errors = np.std(np.array(crm_plot_diffss), axis=0, ddof=1) * 1.96 / math.sqrt(iter2)
@@ -42,49 +44,51 @@ def qLearnMany(mdprm, policy, initialS, initialU, iterations, realQ, iter2):
         plot_iters = plot_iter
         cpb_cover_times.append(cover_time)
         cpb_diffs.append(diff)
+        print('CPB ' + str(j))
 
     cpb_plot_diffs = np.mean(np.array(cpb_plot_diffss), axis=0)
     cpb_plot_errors = np.std(np.array(cpb_plot_diffss), axis=0, ddof=1) * 1.96 / math.sqrt(iter2)
 
     # Both
     plt.clf()   
-    plt.errorbar(plot_iters, crm_plot_diffs, yerr=crm_plot_errors, marker='.', color='red', ecolor='grey', markersize=1, label='CRM')
-    plt.errorbar(plot_iters, cpb_plot_diffs, yerr=cpb_plot_errors, marker='.', color='blue', ecolor='grey', markersize=1, label='CPB')
+    plt.errorbar(plot_iters, crm_plot_diffs, yerr=crm_plot_errors, marker='o', color='red', ecolor='grey', markersize=1, label='CRM')
+    plt.errorbar(plot_iters, cpb_plot_diffs, yerr=cpb_plot_errors, marker='o', color='blue', ecolor='grey', markersize=1, label='CPB')
     plt.title("Q learning average (n= " + str(iter2) + ")")
     plt.xlabel('Iterations')
-    plt.ylabel('Q diff')
-    plt.yscale('log')
-    plt.ylim([0.01, 1/(1-mdprm.discount)])
+    plt.ylabel('Policy diff #')
+    #plt.yscale('log')
+    plt.ylim([0.0, len(mdprm.states) * len(mdprm.reward_states)])
+    #plt.ylim([0.01, 1/(1-mdprm.discount)])
     plt.xticks(rotation = -45)
     plt.legend()
     plt.tight_layout(pad=0.2)
-    plt.savefig('qlearn avg (n= ' + str(iter2) + ').png')
+    plt.savefig('qlearn policy # (n= ' + str(iter2) + ').png')
 
     # CRM
     plt.clf()   
     plt.errorbar(plot_iters, crm_plot_diffs, yerr=crm_plot_errors, marker='.', color='red', ecolor='grey', markersize=1, label='CRM')
     plt.title("Q learning average (n= " + str(iter2) + ")")
     plt.xlabel('Iterations')
-    plt.ylabel('Q diff')
-    plt.yscale('log')
-    plt.ylim([0.01, 1/(1-mdprm.discount)])
+    plt.ylabel('Policy diff #')
+    #plt.yscale('log')
+    plt.ylim([0.0, len(mdprm.states) * len(mdprm.reward_states)])
     plt.xticks(rotation = -45)
     plt.legend()
     plt.tight_layout(pad=0.2)
-    plt.savefig('qlearn CRM avg (n= ' + str(iter2) + ').png')
+    plt.savefig('qlearn CRM policy # (n= ' + str(iter2) + ').png')
 
     # CPB
     plt.clf()   
     plt.errorbar(plot_iters, cpb_plot_diffs, yerr=cpb_plot_errors, marker='.', color='blue', ecolor='grey', markersize=1, label='CPB')
     plt.title("Q learning average (n= " + str(iter2) + ")")
     plt.xlabel('Iterations')
-    plt.ylabel('Q diff')
-    plt.yscale('log')
-    plt.ylim([0.01, 1/(1-mdprm.discount)])
+    plt.ylabel('Policy diff #')
+    #plt.yscale('log')
+    plt.ylim([0.0, len(mdprm.states) * len(mdprm.reward_states)])
     plt.xticks(rotation = -45)
     plt.legend()
     plt.tight_layout(pad=0.2)
-    plt.savefig('qlearn CPB avg (n= ' + str(iter2) + ').png')
+    plt.savefig('qlearn CPB policy # (n= ' + str(iter2) + ').png')
 
     print ("Final CRM  Q-diff mean: " + str(np.mean(crm_diffs)))
     print ("cover time CRM median: " + str(np.median(crm_cover_times)))
@@ -115,9 +119,9 @@ if __name__ == '__main__':
     OfficeWorld.printActions(of, Qvi)
 
     print("")
-    iterations = 1_500_000
+    iterations = 2_000_000
     print("CRM {} iterations".format(iterations))
-    qLearnMany(of, QLearningCRM.policyEpsilonGreedy(of, 0.2), [s1, (9, 0), (9, 10)], [u1, 'coffee'], iterations, Qvi, 201)
+    qLearnMany(of, QLearningCRM.policyEpsilonGreedy(of, 0.2), [s1, (9, 0), (9, 10)], [u1, 'coffee'], iterations, Qvi, 51)
     #Q = np.array(Q)
     #OfficeWorld.printVs(of, Q)
     #OfficeWorld.printActions(of, Q)
