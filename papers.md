@@ -8,3 +8,7 @@ Logically constrained reenforcement learning (start here): https://arxiv.org/pdf
 Logically-Constrained Neural Fitted Q-iteration: https://arxiv.org/pdf/1809.07823.pdf
 
 RewardMachine JIRP: https://arxiv.org/pdf/1909.05912.pdf
+
+Joint Inference of Reward Machines https://arxiv.org/pdf/1909.05912.pdf
+Inference of Finite State Automata from Counterexamples http://www.meolic.com/research/papers/meolic-forte04.pdf
+ 
