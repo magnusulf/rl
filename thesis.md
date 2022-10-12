@@ -19,3 +19,5 @@
     - Algorithm + baseline
     - Experiment setup
     - Results
+
+Note: when we did work to implement stuff.

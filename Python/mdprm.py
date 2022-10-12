@@ -9,11 +9,12 @@ A = TypeVar('A')
 U = TypeVar('U')
 
 class mdprm(Generic[S, A, U]):
-    def __init__(self, states: 'list[S]', actions: 'list[A]', reward_states: 'list[U]', discount: float):
+    def __init__(self, states: 'list[S]', actions: 'list[A]', reward_states: 'list[U]', discount: float, desc: str):
         self.states: 'list[S]' = states
         self.actions: 'list[A]' = actions
         self.reward_states: 'list[U]' = reward_states
         self.discount = discount
+        self.desc = desc
 
     # Due to the implementation of this it is not a true MDP
     # but this one is the easiest to define and can easily be turned
