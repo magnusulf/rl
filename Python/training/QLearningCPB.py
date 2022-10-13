@@ -1,3 +1,4 @@
+import math
 from typing import Any, Callable, List, TypeVar
 import mdprm
 import RLCore
@@ -21,10 +22,12 @@ def qLearn(mdprm: mdprm.mdprm[S, A, U], policy: Policy[S, U, A], initialS: 'list
     s: S = rnd.choice(initialS)
     u: U = rnd.choice(initialU)
 
-    plot_diffs = []
+    plot_polDiffs = []
+    plot_Qdiffs = []
     plot_iter = []
     cover_time = None
     argmax_Q = np.argmax(np.array(realQ), axis=2)
+    plot_point_count = math.floor(iterations / 1000)
 
     for u in mdprm.reward_states:
         for s in mdprm.states:
@@ -53,13 +56,16 @@ def qLearn(mdprm: mdprm.mdprm[S, A, U], policy: Policy[S, U, A], initialS: 'list
         # print("CRM")
 
         newValue = transitionReward + mdprm.discount * max(Q[mdprm.stateIdx(nextS)][mdprm.rewardStateIdx(nextU)])
-        if (mdprm.isTerminal(u)): newValue = transitionReward
+        #if (mdprm.isTerminal(u)): newValue = transitionReward
         Q[mdprm.stateIdx(s)][mdprm.rewardStateIdx(u)][mdprm.actionIdx(a)] = learningRate * newValue + (1.0-learningRate) * Q[mdprm.stateIdx(s)][mdprm.rewardStateIdx(u)][mdprm.actionIdx(a)]
         accReward += transitionReward
         s = nextS
         u = nextU
 
-        if (i % 10_000 == 0):
+        if (i % plot_point_count == 0):
+            Qdiff = np.max(np.abs(np.subtract(np.array(Q), np.array(realQ))))
+            plot_Qdiffs.append(Qdiff)
+
             diff = 0
             for u in mdprm.reward_states:
                 for s in mdprm.states:
@@ -71,7 +77,7 @@ def qLearn(mdprm: mdprm.mdprm[S, A, U], policy: Policy[S, U, A], initialS: 'list
                     if (abs(policy_val - optimal_val) > 0.01):
                         diff += 1
             #diff = np.max(np.abs(np.subtract(np.array(Q), np.array(realQ))))
-            plot_diffs.append(diff)
+            plot_polDiffs.append(diff)
             plot_iter.append(i)
     
     # print("Accumulated reward: %.1f" % accReward)
@@ -89,4 +95,4 @@ def qLearn(mdprm: mdprm.mdprm[S, A, U], policy: Policy[S, U, A], initialS: 'list
     # print ("Final Q-diff: " + str(diff))
     # print ("cover time: " + str(cover_time))
 
-    return  (Q, plot_diffs, plot_iter, cover_time)
+    return  (Q, plot_Qdiffs, plot_polDiffs, plot_iter, cover_time)

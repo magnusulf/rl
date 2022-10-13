@@ -1,6 +1,9 @@
+from typing import Tuple
+from logic.gMonitor import AcceptingSubComponent, isSink, toStrACstate
 from environments import GridWorld
 import RLCore
-import mdprm 
+import mdprm
+import MDP
 import numpy as np
 
 class officeworld(mdprm.mdprm['tuple[int, int]', str, str]):
@@ -18,7 +21,7 @@ class officeworld(mdprm.mdprm['tuple[int, int]', str, str]):
         self.coffee_states: 'list[tuple[int, int]]' = coffee
         self.decoration_states: 'list[tuple[int, int]]' = decorations
         self.absorption_states = offices + decorations # Only used for printing via GridWorld functions
-        mdprm.mdprm.__init__(self, states, actions, reward_states, discount)
+        mdprm.mdprm.__init__(self, states, actions, reward_states, discount, "officeworld")
 
     # def reward(self, u: str, s1: 'tuple[int, int]', a: str, s2: 'tuple[int, int]') -> float:
     #     if (u == 'coffee' and s2 in self.office_states):
@@ -87,6 +90,37 @@ class officeworld(mdprm.mdprm['tuple[int, int]', str, str]):
     def idxToAction(self, action: int) -> str :
         return self.actions[action]
 
+class officeworldsimple(MDP.mdp['tuple[int, int]', str]):
+    def __init__(self, of: officeworld):
+        self.of = of
+        self.max_x = of.max_x
+        self.max_y = of.max_y
+        self.blocked_states = of.blocked_states
+        self.absorption_states = of.absorption_states
+        self.idxToAction = of.idxToAction
+        MDP.mdp.__init__(self, of.states, of.actions, of.discount)
+
+    # Due to the implementation of this it is not a true MDP
+    # but this one is the easiest to define and can easily be turned
+    # to a real transition function or into a stochastic one
+    def baseTransition(self, s1: 'tuple[int, int]', a: str) -> 'list[tuple[tuple[int, int], float]]':
+        return self.of.baseTransition(s1, a)
+
+    def reward(self, s: Tuple[int, int], a: str) -> float:
+        return 0
+
+    def isTerminal(self, s: Tuple[int, int]) -> bool:
+        return False
+
+    def stateIdx(self, s: Tuple[int, int]) -> int:
+        return self.of.stateIdx(s)
+
+    def actionIdx(self, a: str) -> int:
+        return self.of.actionIdx(a)
+
+    def labelingFunction(self, s1: 'tuple[int, int]', a: str, s2: 'tuple[int, int]') -> 'list[str]':
+        return self.of.labelingFunction(s1, a, s2)
+
 def printVs(of: officeworld, Q):
     Qarr = np.array(Q)
     for i in range(len(of.reward_states)):
@@ -107,4 +141,25 @@ def printActions(of: officeworld, Q):
         print(of.reward_states[i])
         Qstate = Qarr[:,i,:]
         GridWorld.printActionsFromQ(of, Qstate) # type: ignore
+
+def printVsSimple(ofs: officeworldsimple, asc: AcceptingSubComponent, Q):
+    Qarr = np.array(Q)
+    for i in range(len(asc.states)):
+        if (isSink(asc.states[i])):
+            continue
+        print("")
+        print(toStrACstate(asc.states[i]))
+        Qstate = Qarr[:,i,:]
+        V = RLCore.QtoV(Qstate) # type: ignore
+        GridWorld.printV(ofs, V) # type: ignore
+
+def printActionsSimple(ofs: officeworldsimple, asc: AcceptingSubComponent, Q):
+    Qarr = np.array(Q)
+    for i in range(len(asc.states)):
+        if (isSink(asc.states[i])):
+            continue
+        print()
+        print(toStrACstate(asc.states[i]))
+        Qstate = Qarr[:,i,:]
+        GridWorld.printActionsFromQ(ofs, Qstate) # type: ignore
 

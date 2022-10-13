@@ -40,17 +40,17 @@ def qLearn(mdprm: mdprm.mdprm[S, A, U], policy: Policy[S, U, A], initialS: 'list
     s: S = rnd.choice(initialS)
     u: U = rnd.choice(initialU)
 
-    plot_diffs = []
+    plot_polDiffs = []
+    plot_Qdiffs = []
     plot_iter = []
     cover_time = None
-    argmax_Q = np.argmax(np.array(realQ), axis=2)
+    plot_point_count = math.floor(iterations / 1000)
 
     for u in mdprm.reward_states:
         for s in mdprm.states:
             for a in mdprm.actions:
                 if (mdprm.isTerminal(u) or mdprm.isBlocked(s)):
                     Q[mdprm.stateIdx(s)][mdprm.rewardStateIdx(u)][mdprm.actionIdx(a)] = 0
-                    argmax_Q[mdprm.stateIdx(s)][mdprm.rewardStateIdx(u)] = 0
                 if (mdprm.isBlocked(s)):
                     visitCount[mdprm.stateIdx(s)][mdprm.actionIdx(a)] = 1
 
@@ -76,13 +76,15 @@ def qLearn(mdprm: mdprm.mdprm[S, A, U], policy: Policy[S, U, A], initialS: 'list
                 continue
             nextU_overline, r_overline = mdprm.rewardTransition(u_overline, mdprm.labelingFunction(s, a, nextS))
             newValue = r_overline + mdprm.discount * max(Q[mdprm.stateIdx(nextS)][mdprm.rewardStateIdx(nextU_overline)])
-            if (mdprm.isTerminal(nextU_overline)): newValue = r_overline
             Q[mdprm.stateIdx(s)][mdprm.rewardStateIdx(u_overline)][mdprm.actionIdx(a)] = learningRate * newValue + (1.0-learningRate) * Q[mdprm.stateIdx(s)][mdprm.rewardStateIdx(u_overline)][mdprm.actionIdx(a)]
         accReward += transitionReward
         s = nextS
         u = nextU
 
-        if (i % 10_000 == 0):
+        if (i % plot_point_count == 0):
+            Qdiff = np.max(np.abs(np.subtract(np.array(Q), np.array(realQ))))
+            plot_Qdiffs.append(Qdiff)
+
             diff = 0
             for u in mdprm.reward_states:
                 for s in mdprm.states:
@@ -94,7 +96,7 @@ def qLearn(mdprm: mdprm.mdprm[S, A, U], policy: Policy[S, U, A], initialS: 'list
                     if (abs(policy_val - optimal_val) > 0.01):
                         diff += 1
             #diff = np.max(np.abs(np.subtract(np.array(Q), np.array(realQ))))
-            plot_diffs.append(diff)
+            plot_polDiffs.append(diff)
             plot_iter.append(i)
     
     # print("Accumulated reward: %.1f" % accReward)
@@ -112,4 +114,4 @@ def qLearn(mdprm: mdprm.mdprm[S, A, U], policy: Policy[S, U, A], initialS: 'list
     # print ("Final Q-diff: " + str(diff))
     # print ("cover time: " + str(cover_time))
 
-    return (Q, plot_diffs, plot_iter, cover_time)
+    return (Q, plot_Qdiffs, plot_polDiffs, plot_iter, cover_time)

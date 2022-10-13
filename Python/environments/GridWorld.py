@@ -16,7 +16,7 @@ class gridworld(MDP.mdp['tuple[int, int]', str]):
         self.absorption_states: 'dict[tuple[int, int], float]' = absorption
         self.starting_state = start
         self.turnProb = turnProb
-        MDP.mdp.__init__(self, states, actions, discount)
+        MDP.mdp.__init__(self, states, actions, discount, 'gridworld')
 
     def reward(self, s1, a):
         if (s1 in self.absorption_states):
