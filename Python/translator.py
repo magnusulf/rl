@@ -21,4 +21,6 @@ class language():
     
     def fromLabel(self, labels: List[str]):
         label = ', '.join(labels)
+        if label != '' and label not in self.dict.keys():
+            self.addLabel(labels)
         return self.dict[label]
