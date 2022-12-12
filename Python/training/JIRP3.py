@@ -1,3 +1,4 @@
+from copy import deepcopy
 from typing import Any, Callable, List, TypeVar
 import mdprm
 import RLCore
@@ -41,11 +42,11 @@ def policyEpsilonGreedy(mdp: mdprm.mdprm[S, A, U], epsilon: float) -> 'Callable[
 
 
 
-def CRM_episode(mdprm: inferredRM, realRewardTransition, policy: Policy[S, U, A], initialS: 'list[S]', initialRealU, Q, iterations: int):
+def CRM_episode(mdprm: inferredRM, realRewardTransition, policy: Policy[S, U, A], initialS: 'list[S]', initialRealU, Q, visitCount, iterations: int):
     transitionF = RLCore.baseTransitionFunctionToStochasticTransitionFunction(mdprm.baseTransition)
     # maxQ: float = 1.0/(1.0-mdprm.discount)
     # Q = [[[maxQ for _ in mdprm.actions] for _ in mdprm.reward_states] for _ in mdprm.states]
-    visitCount = [[0 for _ in mdprm.actions] for _ in mdprm.states]
+    
     accReward = 0.0
 
     s: S = rnd.choice(initialS)
@@ -66,8 +67,12 @@ def CRM_episode(mdprm: inferredRM, realRewardTransition, policy: Policy[S, U, A]
     X: list[list[Experience]] = []
     trace: list[Experience] = []
 
+    ii = 0
     for i in range(iterations):
-        if (mdprm.base_model.isTerminal(realU)):
+        ii += 1
+        
+        if (mdprm.base_model.isTerminal(realU) or i == 0):
+            ii = 0
             s = rnd.choice(initialS)
             u = mdprm.dfa._start_state.name
             realU = initialRealU
@@ -82,14 +87,21 @@ def CRM_episode(mdprm: inferredRM, realRewardTransition, policy: Policy[S, U, A]
 
         trace.append(Experience(mdprm.labelingFunction(s, a, nextS), transitionReward))
         if predictedReward != transitionReward:
-            X.append(trace)
+            example = ("".join([mdprm.lang.fromLabel(e.l) for e in trace]))
+            if len(example) > 0 and len(example) <= 8 and True:
+                tracecopy = deepcopy(trace)
+                X.append(tracecopy)
+
+                # print("iteration:",ii, "starting state name:",mdprm.dfa._start_state.name)
+                # print(u, realU, mdprm.labelingFunction(s, a, nextS), predictedReward, transitionReward, ("".join([mdprm.lang.fromLabel(e.l) for e in trace])))
+                # print(nextU)
+                
             
         visitCount[mdprm.stateIdx(s)][mdprm.actionIdx(a)] += 1
 
         k = 20.0
 
         learningRate: float = k /(k + (visitCount[mdprm.stateIdx(s)][mdprm.actionIdx(a)]))
-        # print("CRM")
         for u_overline in mdprm.reward_states:
             if (mdprm.isTerminal(u_overline)):
                 continue
@@ -104,28 +116,56 @@ def CRM_episode(mdprm: inferredRM, realRewardTransition, policy: Policy[S, U, A]
         realU = nextRealU
     return (Q, X)
 
-def qLearn(base_mdprm: mdprm.mdprm[S, A, any], epsilon: float, initialS: 'list[S]', initialU, num_episodes: int, episode_length):
+def qLearn(base_mdprm: mdprm.mdprm[S, A, any], epsilon: float, initialS: 'list[S]', initialU, num_episodes: int, episode_length, max_trace_len: int, real_dfa_regex, realQ):
     #infer initial hypothesis
     X: list[list[Experience]] = []
     hypothesis = inferredRM(base_mdprm)
-    hypothesis.inferRewardMachine(X)
-    #initialize Q
+    hypothesis.inferRewardMachine(X, max_trace_len)
+    #initialize Q and visitCount
     maxQ: float = 1.0/(1.0-hypothesis.discount)
     Q = [[[maxQ for _ in hypothesis.actions] for _ in hypothesis.reward_states] for _ in hypothesis.states]
+    visitCount = [[0 for _ in hypothesis.actions] for _ in hypothesis.states]
     #policy
     policy = policyEpsilonGreedy(hypothesis, epsilon)
 
+    plot_polDiffs = []
+    plot_Qdiffs = []
+    plot_iter = []
+
     for episode in range(num_episodes):
-        #print("episode "+str(episode))
-        Q, new_X = CRM_episode(hypothesis, base_mdprm.rewardTransition, policy, initialS, initialU, Q, episode_length)
+        Q, new_X = CRM_episode(hypothesis, base_mdprm.rewardTransition, policy, initialS, initialU, Q, visitCount, episode_length)
+
+        # plot 
+        plot_iter.append(episode * episode_length)
+        if (hypothesis.dfa.to_regex() == real_dfa_regex):
+            Qdiff = np.max(np.abs(np.subtract(np.array(Q), np.array(realQ))))
+            plot_Qdiffs.append(Qdiff)
+
+            diff = 0
+            for u in base_mdprm.reward_states:
+                for s in base_mdprm.states:
+                    if (base_mdprm.isTerminal(u) or base_mdprm.isBlocked(s)):
+                        continue
+                    policy_action = np.argmax(Q[base_mdprm.stateIdx(s)][base_mdprm.rewardStateIdx(u)])
+                    policy_val = realQ[base_mdprm.stateIdx(s)][base_mdprm.rewardStateIdx(u)][policy_action]
+                    optimal_val = np.max(realQ[base_mdprm.stateIdx(s)][base_mdprm.rewardStateIdx(u)])
+                    if (abs(policy_val - optimal_val) > 0.01):
+                        diff += 1
+            #diff = np.max(np.abs(np.subtract(np.array(Q), np.array(realQ))))
+            plot_polDiffs.append(diff)
+        else:
+            plot_Qdiffs.append(1)
+            plot_polDiffs.append(1)
+
+        # infer new hypothesis
         if len(new_X) > 0:
+            #print("episode "+str(episode))
             X = X + new_X
-            # infer new hypothesis
-            print("episode "+str(episode))
-            hypothesis.inferRewardMachine(X)
-            # re-init Q
-            Q = [[[maxQ for _ in hypothesis.actions] for _ in hypothesis.reward_states] for _ in hypothesis.states]
-    
-    return Q
+            prevrewardmachine = hypothesis.dfa.to_regex()
+            hypothesis.inferRewardMachine(X, max_trace_len)
+            # re-init Q and visitCount
+            if (prevrewardmachine != hypothesis.dfa.to_regex()):
+                Q = [[[maxQ for _ in hypothesis.actions] for _ in hypothesis.reward_states] for _ in hypothesis.states]
+                visitCount = [[0 for _ in hypothesis.actions] for _ in hypothesis.states]
 
-
+    return (Q, plot_Qdiffs, plot_polDiffs, plot_iter)

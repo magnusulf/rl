@@ -9,9 +9,9 @@ from inferrer import utils, inferrer, automaton
 class inferredRM(mdprm.mdprm):
     def __init__(self, base_model: mdprm.mdprm):
         self.base_model = base_model
-        mdprm.mdprm.__init__(self, base_model.states, base_model.actions, [], base_model.discount)
+        mdprm.mdprm.__init__(self, base_model.states, base_model.actions, [], base_model.discount, base_model.desc)
 
-    def inferRewardMachine(self, X):
+    def inferRewardMachine(self, X, max_trace_len=6):
         self.lang = translator.language()
 
         
@@ -24,8 +24,8 @@ class inferredRM(mdprm.mdprm):
         pos_examples: Set[str] = set([]) 
         neg_examples: Set[str] = set([])
         for trace in X:
-            if len(trace) > 0:
-                example = ("".join([self.lang.fromLabel(e.l) for e in trace]))
+            example = ("".join([self.lang.fromLabel(e.l) for e in trace]))
+            if len(example) > 0 and len(example) <= max_trace_len:
                 reward = (trace[-1].r)
                 if reward == 0:
                     neg_examples.add(example)
@@ -33,7 +33,6 @@ class inferredRM(mdprm.mdprm):
                     pos_examples.add(example)
         
         if len(pos_examples) + len(neg_examples) == 0:
-            print("base rm used")
             pos_examples: Set[str] = set(["Ø"])
 
         alphabet = utils.determine_alphabet(pos_examples.union(neg_examples))
@@ -43,11 +42,12 @@ class inferredRM(mdprm.mdprm):
             neg_examples=neg_examples,
             algorithm='rpni')
         
-        print("Inferring new reward machine from: ", pos_examples, neg_examples)
+        
 
+        #print("Inferring new reward machine from: ", pos_examples, neg_examples)
         dfa = learner.learn_grammar()
         self.dfa: automaton.DFA = dfa
-        print("inferred reward machine " + self.dfa.to_regex() + "\n")
+        #print("inferred reward machine " + self.dfa.to_regex() + "\n")
 
         self.reward_states = [state.name for state in self.dfa.states]
         self.initialState = self.dfa._start_state.name
@@ -62,7 +62,7 @@ class inferredRM(mdprm.mdprm):
         letter = self.lang.fromLabel(labels)
         q = self.dfaStateFromName(u)
         if not self.dfa.transition_exists(q, letter):
-            return (q.name, 0)
+            return q.name, 0
         q = self.dfa.transition(q, letter)
         if q in self.dfa.accept_states:
             return q.name, 1
