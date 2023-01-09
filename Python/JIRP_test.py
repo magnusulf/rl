@@ -8,82 +8,71 @@ import mdprm
 import matplotlib.pyplot as plt
 import math
 from datetime import datetime
+from itertools import permutations
 
 S = TypeVar('S')
 A = TypeVar('A')
 U = TypeVar('U')
 
 
-def qLearnMany(mdprm: mdprm.mdprm[S,A,U], policy, initialS: 'list[S]', initialU: 'list[U]', iterations: int, realQ, real_dfa_regex: str, iter2: int):
-    # crm_Qs = [] 
-    # crm_plot_polDiffss = []
-    # crm_plot_Qdiffss = []
-    # plot_iters = []
-    # crm_cover_times = []
-    # crm_diffs = []
+def qLearnMany(mdprm: mdprm.mdprm[S,A,U], policy, initialS: 'list[S]', initialU: 'list[U]', iterations: int, realQ, real_dfa_regex: str, iter2: int, episode_length: int):
 
-    # for j in range(iter2):
-    #     (Q, plot_Qdiffs, plot_polDiffs, plot_iter, cover_time) = QLearningCRM.qLearn(mdprm, policy, initialS, initialU, iterations, realQ, j)
-    #     diff = np.max(np.abs(np.subtract(np.array(Q), np.array(realQ))))
 
-    #     crm_Qs.append(Q)
-    #     crm_plot_polDiffss.append(plot_polDiffs)
-    #     crm_plot_Qdiffss.append(plot_Qdiffs)
-    #     plot_iters = plot_iter
-    #     crm_cover_times.append(cover_time)
-    #     crm_diffs.append(diff)
-    #     print('CRM ' + mdprm.desc + " " + str(j))
-
-    # crm_plot_Qdiffs = np.mean(np.array(crm_plot_Qdiffss), axis=0)
-    # crm_plot_Qerrors = np.std(np.array(crm_plot_Qdiffss), axis=0, ddof=1) * 1.96 / math.sqrt(iter2)
-    # crm_plot_polDiffs = np.mean(np.array(crm_plot_polDiffss), axis=0)
-    # crm_plot_polErrors = np.std(np.array(crm_plot_polDiffss), axis=0, ddof=1) * 1.96 / math.sqrt(iter2)
-
-    cpb_Qs = [] 
-    cpb_plot_polDiffss = []
-    cpb_plot_Qdiffss = []
-    cpb_plot_iters = []
-    cpb_cover_times = []
-    cpb_diffs = []
-    for j in range(iter2):
-        (Q, plot_Qdiffs, plot_polDiffs, plot_iter, cover_time) = QLearningCPB.qLearn(mdprm, policy, initialS, initialU, iterations, realQ, j)
-        diff = np.max(np.abs(np.subtract(np.array(Q), np.array(realQ))))
-
-        cpb_Qs.append(Q)
-        cpb_plot_polDiffss.append(plot_polDiffs)
-        cpb_plot_Qdiffss.append(plot_Qdiffs)
-        cpb_plot_iters = plot_iter
-        cpb_cover_times.append(cover_time)
-        cpb_diffs.append(diff)
-        print('CPB ' + mdprm.desc + " "+ str(j)  + " time: " + datetime.now().strftime("%H:%M:%S"))
-
-    cpb_plot_Qdiffs = np.mean(np.array(cpb_plot_Qdiffss), axis=0)
-    cpb_plot_Qerrors = np.std(np.array(cpb_plot_Qdiffss), axis=0, ddof=1) * 1.96 / math.sqrt(iter2)
-    cpb_plot_polDiffs = np.mean(np.array(cpb_plot_polDiffss), axis=0)
-    cpb_plot_polErrors = np.std(np.array(cpb_plot_polDiffss), axis=0, ddof=1) * 1.96 / math.sqrt(iter2)
 
     jirp_Qs = [] 
     jirp_plot_polDiffss = []
     jirp_plot_Qdiffss = []
     jirp_plot_iters = []
-    #jirp_cover_times = []
-    #jirp_diffs = []
-
+    jirp_diffs = []
 
     for j in range(iter2):
-        episode_length = 1000
         num_episodes = math.ceil(iterations / episode_length)
         max_trace_len = 6
         real_dfa_regex
-        (Q, plot_Qdiffs, plot_polDiffs, plot_iter) = JIRP3.qLearn(mdprm, 0.2, initialS, initialU[0], num_episodes, episode_length, max_trace_len, real_dfa_regex, realQ)
+        (Q, plot_Qs, plot_iter) = JIRP3.qLearn(mdprm, 0.2, initialS, initialU[0], num_episodes, episode_length, max_trace_len, real_dfa_regex)
         #diff = np.max(np.abs(np.subtract(np.array(Q), np.array(realQ))))
+        #Qdiff = np.max(np.abs(np.subtract(np.array(Q), np.array(realQ))))
+
+        maxQ: float = 1.0/(1.0-mdprm.discount)
+        default_Q = [[[maxQ for _ in mdprm.actions] for _ in mdprm.reward_states] for _ in mdprm.states]
+        plot_Qs = ([default_Q] * (len(plot_iter) - len(plot_Qs))) + plot_Qs
+        last_Q = plot_Qs[-1]
+        perm_Qs = [np.max(np.abs(np.subtract(np.array(np.array(last_Q)[:,perm,:]), np.array(realQ)))) for perm in permutations(range(len(mdprm.reward_states)))]
+        best_perm = list(permutations(range(len(mdprm.reward_states))))[np.argmin(perm_Qs)]
+        Q = np.array(last_Q)[:,best_perm,:]
+        diff = np.max(np.abs(np.subtract(np.array(Q), np.array(realQ))))
+        jirp_diffs.append(diff)
+        plot_Qs = [np.array(q)[:,best_perm,:] for q in plot_Qs]
+        plot_Qdiffs = []
+        plot_polDiffs = []
+        for q in plot_Qs:
+            Qdiff = np.max(np.abs(np.subtract(np.array(q), np.array(realQ))))
+            plot_Qdiffs.append(Qdiff)
+
+            diff = 0
+            for u in mdprm.reward_states:
+                for s in mdprm.states:
+                    if (mdprm.isTerminal(u) or mdprm.isBlocked(s)):
+                        continue
+                    policy_action = np.argmax(q[mdprm.stateIdx(s)][mdprm.rewardStateIdx(u)])
+                    policy_val = realQ[mdprm.stateIdx(s)][mdprm.rewardStateIdx(u)][policy_action]
+                    optimal_val = np.max(realQ[mdprm.stateIdx(s)][mdprm.rewardStateIdx(u)])
+                    if (abs(policy_val - optimal_val) > 0.01):
+                        diff += 1
+            plot_polDiffs.append(diff)
+
+        # last_Q = plot_Qs[-1]
+        # perm_Qs = [np.max(np.abs(np.subtract(np.array(np.array(last_Q)[:,perm,:]), np.array(realQ)))) for perm in permutations(range(len(mdprm.reward_states)))]
+        # best_perm = list(permutations(range(len(mdprm.reward_states))))[np.argmin(perm_Qs)]
+        # Q = np.array(last_Q)[:,best_perm,:]
+        # plot_Qdiffs = [np.max(np.abs(np.subtract(np.array(q)[:,best_perm,:], np.array(realQ)))) for q in plot_Qs]
+        # # append values for iterations without Q of correct shape
+        # plot_Qdiffs = ([1] * (len(plot_iter) - len(plot_Qdiffs))) + plot_Qdiffs
 
         jirp_Qs.append(Q)
         jirp_plot_polDiffss.append(plot_polDiffs)
         jirp_plot_Qdiffss.append(plot_Qdiffs)
         jirp_plot_iters = plot_iter
-        #jirp_cover_times.append(cover_time)
-        #jirp_diffs.append(diff)
         print('JIRP ' + mdprm.desc + " " + str(j)  + " time: " +  datetime.now().strftime("%H:%M:%S"))
 
     jirp_plot_Qdiffs = np.mean(np.array(jirp_plot_Qdiffss), axis=0)
@@ -91,9 +80,34 @@ def qLearnMany(mdprm: mdprm.mdprm[S,A,U], policy, initialS: 'list[S]', initialU:
     jirp_plot_polDiffs = np.mean(np.array(jirp_plot_polDiffss), axis=0)
     jirp_plot_polErrors = np.std(np.array(jirp_plot_polDiffss), axis=0, ddof=1) * 1.96 / math.sqrt(iter2)
 
+    crm_Qs = [] 
+    crm_plot_polDiffss = []
+    crm_plot_Qdiffss = []
+    crm_plot_iters = []
+    crm_cover_times = []
+    crm_diffs = []
+    for j in range(iter2):
+        (Q, plot_Qdiffs, plot_polDiffs, plot_iter, cover_time) = QLearningCRM.qLearn(mdprm, policy, initialS, initialU, iterations, realQ, j)
+        diff = np.max(np.abs(np.subtract(np.array(Q), np.array(realQ))))
+
+        crm_Qs.append(Q)
+        crm_plot_polDiffss.append(plot_polDiffs)
+        crm_plot_Qdiffss.append(plot_Qdiffs)
+        crm_plot_iters = plot_iter
+        crm_cover_times.append(cover_time)
+        crm_diffs.append(diff)
+        print('CRM ' + mdprm.desc + " "+ str(j)  + " time: " + datetime.now().strftime("%H:%M:%S"))
+
+    crm_plot_Qdiffs = np.mean(np.array(crm_plot_Qdiffss), axis=0)
+    crm_plot_Qerrors = np.std(np.array(crm_plot_Qdiffss), axis=0, ddof=1) * 1.96 / math.sqrt(iter2)
+    crm_plot_polDiffs = np.mean(np.array(crm_plot_polDiffss), axis=0)
+    crm_plot_polErrors = np.std(np.array(crm_plot_polDiffss), axis=0, ddof=1) * 1.96 / math.sqrt(iter2)
+
     plt.clf()
-    plt.errorbar(cpb_plot_iters, cpb_plot_Qdiffs, yerr=cpb_plot_Qerrors, marker='o', color='blue', ecolor='grey', markersize=1, label='CPB')
+    plt.errorbar(crm_plot_iters, crm_plot_Qdiffs, yerr=crm_plot_Qerrors, marker='o', color='blue', ecolor='grey', markersize=1, label='CRM')
     plt.errorbar(jirp_plot_iters, jirp_plot_Qdiffs, yerr=jirp_plot_Qerrors, marker='o', color='red', ecolor='grey', markersize=1, label='JIRP')
+    # for i in range(iter2):
+    #     plt.plot(jirp_plot_iters, jirp_plot_Qdiffss[i], label="jirp {}".format(i), color="yellow", markersize=1)
     plt.title('Q learning average ' + mdprm.desc + ' (n=' + str(iter2) + ")")
     plt.xlabel('Iterations')
     plt.ylabel('Q diff')
@@ -101,13 +115,13 @@ def qLearnMany(mdprm: mdprm.mdprm[S,A,U], policy, initialS: 'list[S]', initialU:
     plt.ylim([0.01, 1/(1-mdprm.discount)])
     plt.xticks(rotation = -45)
     plt.legend()
-    #plt.tight_layout(pad=0.2)
     plt.savefig('qlearn Q-diff  ' + mdprm.desc + ' (n=' + str(iter2) + ').png', bbox_inches='tight')
 
-    # Both
     plt.clf()   
-    plt.errorbar(cpb_plot_iters, cpb_plot_polDiffs, yerr=cpb_plot_polErrors, marker='o', color='blue', ecolor='grey', markersize=1, label='CPB')
+    plt.errorbar(crm_plot_iters, crm_plot_polDiffs, yerr=crm_plot_polErrors, marker='o', color='blue', ecolor='grey', markersize=1, label='CRM')
     plt.errorbar(jirp_plot_iters, jirp_plot_polDiffs, yerr=jirp_plot_polErrors, marker='o', color='red', ecolor='grey', markersize=1, label='JIRP')
+    # for i in range(iter2):
+    #     plt.plot(jirp_plot_iters, jirp_plot_polDiffss[i], label="jirp {}".format(i), color="yellow", markersize=1)
     plt.title('Q learning average  ' + mdprm.desc + ' (n=' + str(iter2) + ")")
     plt.xlabel('Iterations')
     plt.ylabel('Policy diff #')
@@ -117,38 +131,8 @@ def qLearnMany(mdprm: mdprm.mdprm[S,A,U], policy, initialS: 'list[S]', initialU:
     #plt.tight_layout(pad=0.3)
     plt.savefig('qlearn policy # ' + mdprm.desc + ' (n=' + str(iter2) + ').png', bbox_inches='tight')
 
-    # # CRM
-    # plt.clf()   
-    # plt.errorbar(plot_iters, crm_plot_diffs, yerr=crm_plot_errors, marker='.', color='red', ecolor='grey', markersize=1, label='CRM')
-    # plt.title("Q learning average (n= " + str(iter2) + ")")
-    # plt.xlabel('Iterations')
-    # plt.ylabel('Policy diff #')
-    # #plt.yscale('log')
-    # plt.ylim([0.0, len(mdprm.states) * len(mdprm.reward_states)])
-    # plt.xticks(rotation = -45)
-    # plt.legend()
-    # plt.tight_layout(pad=0.2)
-    # plt.savefig('qlearn CRM policy # (n= ' + str(iter2) + ').png')
-
-    # # CPB
-    # plt.clf()   
-    # plt.errorbar(plot_iters, cpb_plot_diffs, yerr=cpb_plot_errors, marker='.', color='blue', ecolor='grey', markersize=1, label='CPB')
-    # plt.title("Q learning average (n= " + str(iter2) + ")")
-    # plt.xlabel('Iterations')
-    # plt.ylabel('Policy diff #')
-    # #plt.yscale('log')
-    # plt.ylim([0.0, len(mdprm.states) * len(mdprm.reward_states)])
-    # plt.xticks(rotation = -45)
-    # plt.legend()
-    # plt.tight_layout(pad=0.2)
-    # plt.savefig('qlearn CPB policy # (n= ' + str(iter2) + ').png')
-
-    
-    #print ("cover time CRM median: " + str(np.median(crm_cover_times)))
-
-    print ("Final CPB  Q-diff mean: " + str(np.mean(cpb_diffs))  + datetime.now().strftime("%H:%M:%S"))
-    #print ("Final CRM  Q-diff mean: " + str(np.mean(crm_diffs)))
-    #print ("cover time CPB median: " + str(np.median(cpb_cover_times)))
+    print ("Final CRM  Q-diff mean: " + str(np.mean(crm_diffs))  + datetime.now().strftime(" %H:%M:%S"))
+    print ("Final JIRP Q-diff mean: " + str(np.mean(jirp_diffs))  + datetime.now().strftime(" %H:%M:%S"))
 
 if __name__ == '__main__':
 
@@ -157,19 +141,30 @@ if __name__ == '__main__':
         (3, 3), (4, 3), (5, 3), (6, 3), (7, 3), (3, 4), (3, 5), (3, 6), (3, 7), (7, 4), (7, 5), (7, 6), (7, 7), (4, 7), (6, 7)],
         [(5,5)], # Office
         [(4,8), (4, 2)], # Coffes
-        [(1, 5), (1, 9), (5,1), (5, 9), (9, 1), (9, 5), (9,9)], # Decorations
+        [], # Decorations
         0.1, # turn probability
         0.95) # discount
     s1 = (1, 2)
     u1 = 'start'
 
+    medof = OfficeWorld.officeworld(7, 7,
+        [(3,0), (3,2), (0,3), (2,3),
+        (3, 3), (4, 3), (5, 3), (6, 3), (3, 4), (3, 6)],
+        [(5,5)], # Office
+        [(5, 1)], # Coffes
+        [], # Decorations
+        0.1, # turn probability
+        0.95) # discount
+    s1 = (0, 0)
+    u1 = 'start'
+
     smallof = OfficeWorld.officeworld(3, 3,
-    [],
-    [(1,1)], # Office
-    [(1,0), (0, 2)], # Coffes
-    [], # Decorations
-    0.1, # turn probability
-    0.95) # discount
+        [],
+        [(0,1)], # Office
+        [(1,0), (0, 2)], # Coffes
+        [], # Decorations
+        0.1, # turn probability
+        0.95) # discount
     s1 = (0, 0)
     u1 = 'start'
 
@@ -178,7 +173,7 @@ if __name__ == '__main__':
 
     rs = RiverSwimRM.riverswimRM(8, 0.55, 0.05, 0.1, 1.0, 0.95)
 
-    env = smallof
+    env = of
 
     print("Value iteration RM: " + datetime.now().strftime("%H:%M:%S"))
     Qvi = ValueIterationRM.valueIteration(env)
@@ -188,17 +183,31 @@ if __name__ == '__main__':
     print("")
     if (env == of):
         iterations = 2_000_000
-        iter2 = 10
-        initialStates = [s1, (10,0), (10, 10), (0, 10)]
+        episode_length = 100_000
+        iter2 = 50
+        #initialStates = [s1, (10,0), (10, 10), (0, 10)]
+        initialStates = [s1]
         initialRewardStates = [u1]
 
         real_regex = '(cc*(o(o|c))|o)*cc*o'
 
         OfficeWorld.printVs(of, Qvi)
         OfficeWorld.printActions(of, Qvi)
+    elif (env == medof):
+        iterations = 1_000_000
+        episode_length = 10_000
+        iter2 = 10
+        initialStates = [s1]
+        initialRewardStates = [u1]
+
+        real_regex = '(cc*(o(o|c))|o)*cc*o'
+
+        OfficeWorld.printVs(medof, Qvi)
+        OfficeWorld.printActions(medof, Qvi)
     elif (env == smallof):
-        iterations = 1000_000
-        iter2 = 3
+        iterations = 1_000_000
+        episode_length = 100_000
+        iter2 = 10
         initialStates = [s1]
         initialRewardStates = [u1]
 
@@ -208,6 +217,7 @@ if __name__ == '__main__':
         OfficeWorld.printActions(smallof, Qvi)
     else:
         iterations = 100_000
+        episode_length = 1000
         iter2 = 1000
         initialStates = [1]
         initialRewardStates = ['leftgoal', 'rightgoal']
@@ -217,20 +227,6 @@ if __name__ == '__main__':
         RiverSwimRM.printVs(rs, Qvi)
         RiverSwimRM.printActions(rs, Qvi)
     
-    print("CPB {} iterations".format(iterations))
-
-    
-    qLearnMany(env, QLearningCRM.policyEpsilonGreedy(env, 0.2), initialStates, initialRewardStates, iterations, Qvi, real_regex, iter2)
-
-    #Q = np.array(Q)
-    #OfficeWorld.printVs(of, Q)
-    #OfficeWorld.printActions(of, Q)
-
+    print("Test {} iterations".format(iterations))
+    qLearnMany(env, QLearningCRM.policyEpsilonGreedy(env, 0.2), initialStates, initialRewardStates, iterations, Qvi, real_regex, iter2, episode_length)
     print("")
-    # print("CPB")
-
-    # Q = QLearningCPB.qLearn(of, QLearningCRM.policyEpsilonGreedy(of, 0.2), s1, u1, iterations, Qvi)
-    # Q = np.array(Q)
-
-    # OfficeWorld.printVs(of, Q)
-    # OfficeWorld.printActions(of, Q)
