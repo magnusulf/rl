@@ -17,8 +17,6 @@ U = TypeVar('U')
 
 def qLearnMany(mdprm: mdprm.mdprm[S,A,U], policy, initialS: 'list[S]', initialU: 'list[U]', iterations: int, realQ, real_dfa_regex: str, iter2: int, episode_length: int):
 
-
-
     jirp_Qs = [] 
     jirp_plot_polDiffss = []
     jirp_plot_Qdiffss = []
@@ -30,8 +28,6 @@ def qLearnMany(mdprm: mdprm.mdprm[S,A,U], policy, initialS: 'list[S]', initialU:
         max_trace_len = 6
         real_dfa_regex
         (Q, plot_Qs, plot_iter) = JIRP3.qLearn(mdprm, 0.2, initialS, initialU[0], num_episodes, episode_length, max_trace_len, real_dfa_regex)
-        #diff = np.max(np.abs(np.subtract(np.array(Q), np.array(realQ))))
-        #Qdiff = np.max(np.abs(np.subtract(np.array(Q), np.array(realQ))))
 
         maxQ: float = 1.0/(1.0-mdprm.discount)
         default_Q = [[[maxQ for _ in mdprm.actions] for _ in mdprm.reward_states] for _ in mdprm.states]
@@ -60,14 +56,6 @@ def qLearnMany(mdprm: mdprm.mdprm[S,A,U], policy, initialS: 'list[S]', initialU:
                     if (abs(policy_val - optimal_val) > 0.01):
                         diff += 1
             plot_polDiffs.append(diff)
-
-        # last_Q = plot_Qs[-1]
-        # perm_Qs = [np.max(np.abs(np.subtract(np.array(np.array(last_Q)[:,perm,:]), np.array(realQ)))) for perm in permutations(range(len(mdprm.reward_states)))]
-        # best_perm = list(permutations(range(len(mdprm.reward_states))))[np.argmin(perm_Qs)]
-        # Q = np.array(last_Q)[:,best_perm,:]
-        # plot_Qdiffs = [np.max(np.abs(np.subtract(np.array(q)[:,best_perm,:], np.array(realQ)))) for q in plot_Qs]
-        # # append values for iterations without Q of correct shape
-        # plot_Qdiffs = ([1] * (len(plot_iter) - len(plot_Qdiffs))) + plot_Qdiffs
 
         jirp_Qs.append(Q)
         jirp_plot_polDiffss.append(plot_polDiffs)
@@ -106,8 +94,6 @@ def qLearnMany(mdprm: mdprm.mdprm[S,A,U], policy, initialS: 'list[S]', initialU:
     plt.clf()
     plt.errorbar(crm_plot_iters, crm_plot_Qdiffs, yerr=crm_plot_Qerrors, marker='o', color='blue', ecolor='grey', markersize=1, label='CRM')
     plt.errorbar(jirp_plot_iters, jirp_plot_Qdiffs, yerr=jirp_plot_Qerrors, marker='o', color='red', ecolor='grey', markersize=1, label='JIRP')
-    # for i in range(iter2):
-    #     plt.plot(jirp_plot_iters, jirp_plot_Qdiffss[i], label="jirp {}".format(i), color="yellow", markersize=1)
     plt.title('Q learning average ' + mdprm.desc + ' (n=' + str(iter2) + ")")
     plt.xlabel('Iterations')
     plt.ylabel('Q diff')
@@ -120,15 +106,12 @@ def qLearnMany(mdprm: mdprm.mdprm[S,A,U], policy, initialS: 'list[S]', initialU:
     plt.clf()   
     plt.errorbar(crm_plot_iters, crm_plot_polDiffs, yerr=crm_plot_polErrors, marker='o', color='blue', ecolor='grey', markersize=1, label='CRM')
     plt.errorbar(jirp_plot_iters, jirp_plot_polDiffs, yerr=jirp_plot_polErrors, marker='o', color='red', ecolor='grey', markersize=1, label='JIRP')
-    # for i in range(iter2):
-    #     plt.plot(jirp_plot_iters, jirp_plot_polDiffss[i], label="jirp {}".format(i), color="yellow", markersize=1)
     plt.title('Q learning average  ' + mdprm.desc + ' (n=' + str(iter2) + ")")
     plt.xlabel('Iterations')
     plt.ylabel('Policy diff #')
     plt.ylim([0.0, len(mdprm.states) * len([x for x in mdprm.reward_states if not mdprm.isTerminal(x)])])
     plt.xticks(rotation = -45)
     plt.legend()
-    #plt.tight_layout(pad=0.3)
     plt.savefig('qlearn policy # ' + mdprm.desc + ' (n=' + str(iter2) + ').png', bbox_inches='tight')
 
     print ("Final CRM  Q-diff mean: " + str(np.mean(crm_diffs))  + datetime.now().strftime(" %H:%M:%S"))
@@ -183,9 +166,8 @@ if __name__ == '__main__':
     print("")
     if (env == of):
         iterations = 2_000_000
-        episode_length = 100_000
-        iter2 = 50
-        #initialStates = [s1, (10,0), (10, 10), (0, 10)]
+        episode_length = 1000
+        iter2 = 500
         initialStates = [s1]
         initialRewardStates = [u1]
 
